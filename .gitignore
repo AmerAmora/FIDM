@@ -1,0 +1,22 @@
+## Visual Studio / .NET .gitignore
+.vs/
+[Bb]in/
+[Oo]bj/
+publish/
+
+# User-specific files
+*.user
+*.userosv
+*.suo
+*.userprefs
+*.sln.docstates
+
+# Build and test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.log
+out.txt
+
+# OS and cache files
+Thumbs.db
+.DS_Store

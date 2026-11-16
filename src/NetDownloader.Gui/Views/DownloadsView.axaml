@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetDownloader.Gui.ViewModels"
+             x:Class="NetDownloader.Gui.Views.DownloadsView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Page Title -->
+        <TextBlock Grid.Row="0" Text="Downloads" 
+                   FontSize="22" FontWeight="SemiBold" 
+                   Foreground="#FFFFFF" Margin="0,0,0,16"/>
+
+        <!-- Table Header -->
+        <Border Grid.Row="1" Background="#161B24" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+            <Grid ColumnDefinitions="*,180,100,100,90,110">
+                <TextBlock Grid.Column="0" Text="Name" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13"/>
+                <TextBlock Grid.Column="1" Text="Progress" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" Margin="8,0"/>
+                <TextBlock Grid.Column="2" Text="Speed" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="3" Text="ETA" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="4" Text="Size" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="5" Text="Status" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Package & Child Items List -->
+        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Packages}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DownloadPackageViewModel">
+                        <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                                CornerRadius="8" Margin="0,0,0,8" Padding="12,10">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="▶ Resume Package" 
+                                              Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ResumePackageCommand}"
+                                              CommandParameter="{Binding}"/>
+                                    <MenuItem Header="⏸ Pause Package" 
+                                              Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).PausePackageCommand}"
+                                              CommandParameter="{Binding}"/>
+                                    <Separator/>
+                                    <MenuItem Header="📁 Open Folder" 
+                                              Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).OpenPackageFolderCommand}"
+                                              CommandParameter="{Binding}"/>
+                                    <MenuItem Header="❌ Remove Package" 
+                                              Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).RemovePackageCommand}"
+                                              CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+
+                            <StackPanel Spacing="6">
+                                <!-- Package Row -->
+                                <Grid ColumnDefinitions="*,180,100,100,90,110">
+                                    <!-- Name & Chevron (Constrained!) -->
+                                    <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <ToggleButton Grid.Column="0" IsChecked="{Binding IsExpanded}"
+                                                      Background="Transparent" BorderThickness="0" Padding="4"
+                                                      Cursor="Hand" VerticalAlignment="Center">
+                                            <Panel Width="12" Height="12">
+                                                <Path Data="M 3,1 L 9,6 L 3,11 Z" Fill="#8F9CAE" Stretch="Uniform"
+                                                      IsVisible="{Binding !IsExpanded}"/>
+                                                <Path Data="M 1,3 L 6,9 L 11,3 Z" Fill="#2D8CFF" Stretch="Uniform"
+                                                      IsVisible="{Binding IsExpanded}"/>
+                                            </Panel>
+                                        </ToggleButton>
+
+                                        <!-- Folder Icon -->
+                                        <Border Grid.Column="1" Width="26" Height="26" Background="#332B14" CornerRadius="6" Margin="6,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="📁" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Truncated Name -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"
+                                                       TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                       ToolTip.Tip="{Binding Name}"/>
+                                            <TextBlock Text="Package" FontSize="11" Foreground="#6B7280"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Overall Progress Bar -->
+                                    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                                        <ProgressBar Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" 
+                                                     Height="6" CornerRadius="3"
+                                                     Foreground="{Binding ProgressBarColor}" Background="#262D3D"/>
+                                    </Grid>
+
+                                    <!-- Speed (Empty for package) -->
+                                    <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
+
+                                    <!-- ETA (Empty for package) -->
+                                    <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
+
+                                    <!-- Total Size -->
+                                    <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}" 
+                                               Foreground="#E5E7EB" FontWeight="Medium" FontSize="13" 
+                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                    <!-- Status -->
+                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}" CornerRadius="12" 
+                                            Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            IsVisible="{Binding IsBadgeVisible}">
+                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                   FontWeight="SemiBold" FontSize="12"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Child Part Rows -->
+                                <ItemsControl ItemsSource="{Binding Items}" IsVisible="{Binding IsExpanded}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:DownloadItemViewModel">
+                                            <!-- Matching Padding (12,8) and 0 horizontal margin ensures columns align perfectly! -->
+                                            <Border Background="#161B25" CornerRadius="6" Margin="0,3,0,0" Padding="12,8">
+                                                <Grid ColumnDefinitions="*,180,100,100,90,110">
+                                                    <!-- File Name & Icon (Indented within Column 0) -->
+                                                    <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="24,0,12,0">
+                                                        <TextBlock Grid.Column="0" Text="↳" Foreground="#4B5563" FontSize="13" FontWeight="Bold" 
+                                                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <Border Grid.Column="1" Width="24" Height="24" Background="#1C2738" CornerRadius="4" VerticalAlignment="Center">
+                                                            <TextBlock Text="📄" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                            <TextBlock Text="{Binding FileName}" FontSize="13" Foreground="#F3F4F6"
+                                                                       TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                                       ToolTip.Tip="{Binding FileName}"/>
+                                                            <TextBlock Text="{Binding FormattedSize}" FontSize="11" Foreground="#6B7280"/>
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <!-- Segmented Chunk Progress Bar -->
+                                                    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                                                        <!-- Segmented chunks when downloading or completed -->
+                                                        <ItemsControl ItemsSource="{Binding Chunks}" IsVisible="{Binding !IsExtracting}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="3"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="vm:DownloadChunkViewModel">
+                                                                    <Border Width="7" Height="14" CornerRadius="2" 
+                                                                            Background="{Binding FillColor}"/>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+
+                                                        <!-- Striped progress when extracting -->
+                                                        <ProgressBar IsIndeterminate="True" Height="8" CornerRadius="4"
+                                                                     Foreground="#D97706" Background="#262D3D"
+                                                                     IsVisible="{Binding IsExtracting}"/>
+                                                    </Grid>
+
+                                                    <!-- Speed -->
+                                                    <TextBlock Grid.Column="2" Text="{Binding SpeedString}" 
+                                                               Foreground="#93C5FD" FontSize="13" 
+                                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                                    <!-- ETA -->
+                                                    <TextBlock Grid.Column="3" Text="{Binding EtaString}" 
+                                                               Foreground="#E5E7EB" FontSize="13" 
+                                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                                    <!-- Size (empty for child row since shown under name) -->
+                                                    <TextBlock Grid.Column="4" Text="" VerticalAlignment="Center"/>
+
+                                                    <!-- Status Badge -->
+                                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}" 
+                                                            CornerRadius="12" Padding="10,3"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                                   FontWeight="SemiBold" FontSize="11"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

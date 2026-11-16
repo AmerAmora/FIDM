@@ -1,0 +1,83 @@
+You are an expert .NET Systems Architect and Desktop UI Engineer. Build a production-grade, JDownloader-inspired multi-link and multi-part desktop download manager in .NET 8 called `NetDownloader` with an Avalonia UI desktop interface.
+
+## Execution Rules
+1. Work strictly through Phases 1 to 7 in order.
+2. Do NOT skip ahead. After completing each phase, run `dotnet build` and `dotnet test` via the CLI. Fix all compiler warnings, XAML binding errors, and test failures before starting the next phase.
+3. DO NOT use Git under any circumstances. Never run `git init`, `git status`, `git add`, `git commit`, or any other `git` CLI commands, and do not create `.git` directories or `.gitignore` files. Rely strictly on file system edits, `dotnet build`, and `dotnet test`.
+
+## Tech Stack & Packages
+- Target Framework: `.NET 8.0`
+- Solution Structure:
+  - `src/NetDownloader.Core` (Class Library: Engine, LinkGrabber, Persistence, Extraction)
+  - `src/NetDownloader.Gui` (Avalonia MVVM Desktop App)
+  - `tests/NetDownloader.Tests` (xUnit test project)
+- NuGet Packages (`NetDownloader.Core`):
+  - `Polly` (Transient HTTP fault handling and exponential backoff retries)
+  - `SharpCompress` (Multi-part archive extraction for `.rar`, `.7z`, `.zip`, `.001`)
+  - `Microsoft.Extensions.DependencyInjection` & `Microsoft.Extensions.Http`
+- NuGet Packages (`NetDownloader.Gui`):
+  - `Avalonia`, `Avalonia.Desktop`, `Avalonia.Themes.Fluent`, `Avalonia.Controls.DataGrid`
+  - `CommunityToolkit.Mvvm` (ObservableObject, RelayCommand, MVVM source generators)
+
+---
+
+## Phase 1: Solution Scaffolding & Domain Models
+1. Create the solution `NetDownloader.sln` and the three projects (`NetDownloader.Core`, `NetDownloader.Gui`, `NetDownloader.Tests`), wiring up project references and NuGet packages.
+2. In `NetDownloader.Core`, create the domain models:
+   - `DownloadPackage`: Groups related multi-part links (e.g., `archive.part1.rar`, `archive.part2.rar`) under one package name, destination directory, extraction password (optional), and overall status (`Queued`, `Downloading`, `Paused`, `Completed`, `Extracting`, `Extracted`, `Failed`).
+   - `DownloadItem`: Represents a single URL within a package, tracking `Id`, `Url`, `FileName`, `TotalBytes`, `DownloadedBytes`, `SupportsRange`, `Status`, `ErrorMessage`, `RetryCount`, and a list of `DownloadChunk` objects.
+   - `DownloadChunk`: Tracks byte-range segments (`ChunkIndex`, `StartByte`, `EndByte`, `CurrentByteOffset`, `IsCompleted`) for parallel segmented downloading.
+   - `EngineConfiguration`: Configurable settings for `DefaultDownloadDirectory`, `MaxConcurrentPackages` (default 3), `MaxConcurrentDownloadsPerPackage` (default 5), `ChunksPerFile` (default 8), `MaxSpeedBytesPerSecond` (0 = unlimited), `AutoExtract` (bool), and `DeleteArchiveAfterExtract` (bool).
+3. Verify Phase 1 with `dotnet build`.
+
+## Phase 2: LinkGrabber & Multi-Part Package Grouping
+1. Implement `ILinkGrabberService` in `NetDownloader.Core`:
+   - Accept raw text or a `.txt` file containing mixed text and URLs, extracting valid HTTP/HTTPS URLs via regex.
+   - Probe URLs concurrently using `HttpClient` (`HEAD` request, falling back to `GET` with `Range: bytes=0-0` if `HEAD` is rejected) to resolve the true filename (from `Content-Disposition` or URL path), `Content-Length`, and `Accept-Ranges` support, reporting progress via `IProgress<LinkProbeProgress>`.
+   - Automatically group multi-part files into `DownloadPackage` instances by stripping common multi-part suffixes (`.part01.rar`, `.part1.rar`, `.r00`, `.7z.001`, `.zip.001`, `.001`) to derive the shared package name.
+2. Write unit tests in `NetDownloader.Tests` verifying filename resolution, multi-part regex grouping, and range capability detection using a mocked `HttpMessageHandler`.
+3. Run `dotnet test` and ensure all tests pass.
+
+## Phase 3: State Persistence & Resumable Storage
+1. Implement `IStateStore` in `NetDownloader.Core` using atomic JSON file writes (`state.json` and `settings.json` in the user's AppData/local folder):
+   - Save and load the queue of `DownloadPackage` objects, including exact `CurrentByteOffset` values for every `DownloadChunk`, plus `EngineConfiguration`.
+   - Implement periodic auto-saving (throttled to once every 2 seconds during active downloads) and immediate saving on pause, shutdown, or completion.
+2. Pre-allocate destination `.part` files on disk and ensure each chunk writes to its exact byte offset using thread-safe random file access (`RandomAccess.WriteAsync` in .NET 8).
+3. Write unit tests testing state serialization and concurrent `RandomAccess.WriteAsync` writes to different offsets of a temporary file.
+4. Run `dotnet test` and ensure all tests pass.
+
+## Phase 4: Multi-Link & Segmented Download Engine
+1. Implement `IDownloadEngine` in `NetDownloader.Core`:
+   - Use `SemaphoreSlim` to control concurrency across packages and individual items.
+   - For each `DownloadItem`, if `SupportsRange` is true and `TotalBytes` is known, split the file into `ChunksPerFile` byte ranges (`Range: bytes=start-end`) and download chunks in parallel using `RandomAccess.WriteAsync`. Otherwise, fall back to a single stream.
+   - Integrate `Polly` retry policies for HTTP 429, 5xx, and network timeouts (exponential backoff + jitter, respecting `Retry-After` headers).
+   - Implement a token-bucket `BandwidthLimiter` to enforce `MaxSpeedBytesPerSecond` dynamically across all active streams.
+   - Expose C# events or `IObservable` streams for real-time UI updates (throttled to 4 updates/sec) broadcasting item progress, chunk progress, moving-average download speed (`BytesPerSecond`), and ETA.
+   - Support `StartAllAsync()`, `PauseAllAsync()`, `PausePackageAsync(id)`, `ResumePackageAsync(id)`, and `RemovePackageAsync(id, deleteFiles)`.
+   - Rename the `.part` file to the final filename once all chunks pass byte-count verification.
+2. Write unit tests simulating segmented range downloads, pause/resume mid-download, and retry recovery on transient stream failures.
+3. Run `dotnet test` and ensure all tests pass.
+
+## Phase 5: Multi-Part Auto-Extractor
+1. Implement `IArchiveExtractor` in `NetDownloader.Core` using `SharpCompress`:
+   - Trigger automatically when all `DownloadItem` entries in a `DownloadPackage` reach `Completed` status (if `AutoExtract` is enabled).
+   - Detect multi-volume archives (e.g., `.part1.rar`, `.7z.001`, `.zip`) and open the primary volume stream alongside sibling volume files, passing the package's optional extraction password.
+   - Extract all contents to the package output directory while reporting extraction progress percentage back to the engine so the GUI can display an "Extracting" progress state.
+   - Optionally delete the archive part files after verified extraction.
+2. Write a unit test verifying extraction triggers only when the final part of a multi-part package completes.
+3. Run `dotnet test` and ensure all tests pass.
+
+## Phase 6: Avalonia MVVM Architecture & ViewModels
+1. In `NetDownloader.Gui`, configure Dependency Injection (`Microsoft.Extensions.DependencyInjection`) in `App.axaml.cs` to wire `ILinkGrabberService`, `IStateStore`, `IDownloadEngine`, `IArchiveExtractor`, and ViewModels.
+2. Build observable ViewModels using `CommunityToolkit.Mvvm`:
+   - `MainWindowViewModel`: Manages left sidebar navigation (`Downloads`, `LinkGrabber`, `Completed`, `Settings`), top-level toolbar commands (`StartAllCommand`, `PauseAllCommand`, `StopAllCommand`, `AddLinksDialogCommand`), global download speed readout, speed limit input, and clipboard monitoring toggle.
+   - `DownloadPackageViewModel` & `DownloadItemViewModel`: Observable wrappers that marshal background engine events onto the UI thread (`Dispatcher.UIThread.Post`) to update progress percentages (0-100), segmented chunk visual indicators, formatted sizes, speeds (`MB/s`), status badges, ETA, and child part lists in real time.
+   - `LinkGrabberViewModel`: Holds pasted raw URLs, runs `ILinkGrabberService` with a loading indicator, displays staged `DownloadPackageViewModel` groups with `Online` status badges, allows editing the destination folder and optional archive password, and provides an "Enqueue & Start Downloads" command.
+   - `SettingsViewModel`: Binds to `EngineConfiguration` (max concurrent packages, max downloads per package, chunks per file, global speed limit, default directory, auto-extract toggles) and persists changes via `IStateStore`.
+3. Verify Phase 6 with `dotnet build`.
+
+## Phase 7: Dark Fluent Desktop Views & Polish
+1. Build a modern dark-themed Fluent UI (`RequestedThemeVariant="Dark"`, background `#181C24`, card/surface `#222733`, accent `#2D8CFF`) in `NetDownloader.Gui`:
+   - **Left Navigation Sidebar**: Navigation items for `Downloads`, `LinkGrabber`, `Completed`, and `Settings`.
+   - **Top Action Bar**: `Start All`, `Pause All`, `Stop`, `+ Add URLs` buttons, search filter box, and a `Clipboard Monitor` toggle switch.
+   - **Downloads View**: Expandable hierarchical list/grid showing each `DownloadPackage` (Name, Overall Progress Bar, Total Size, Status) and its nested `DownloadItem` parts (Part FileName, Segmented Chunk Progress Bar, Speed in `MB/s`, ETA, Status Badge like `Downloading` or `Extracting`). Include context-menu actions per package (Pause, Resume,

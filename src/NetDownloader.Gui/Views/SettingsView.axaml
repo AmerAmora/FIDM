@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetDownloader.Gui.ViewModels"
+             x:Class="NetDownloader.Gui.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Page Title -->
+        <TextBlock Grid.Row="0" Text="Settings" 
+                   FontSize="22" FontWeight="SemiBold" 
+                   Foreground="#FFFFFF" Margin="0,0,0,20"/>
+
+        <!-- Settings Cards Grid -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,20">
+            <!-- Left Column: Download Engine & Concurrency -->
+            <Border Grid.Column="0" Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                    CornerRadius="8" Padding="20" Margin="0,0,12,0">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Download Engine &amp; Concurrency" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,8"/>
+
+                    <!-- Max Concurrent Packages -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Max Concurrent Packages" Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1" Value="{Binding MaxConcurrentPackages}" Minimum="1" Maximum="10" Width="110"
+                                       Background="#151922" BorderBrush="#2A3245" Foreground="#FFFFFF"/>
+                    </Grid>
+
+                    <!-- Max Downloads Per Package -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Max Downloads Per Package" Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1" Value="{Binding MaxDownloadsPerPackage}" Minimum="1" Maximum="20" Width="110"
+                                       Background="#151922" BorderBrush="#2A3245" Foreground="#FFFFFF"/>
+                    </Grid>
+
+                    <!-- Chunks Per File -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Chunks Per File" Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1" Value="{Binding ChunksPerFile}" Minimum="1" Maximum="32" Width="110"
+                                       Background="#151922" BorderBrush="#2A3245" Foreground="#FFFFFF"/>
+                    </Grid>
+
+                    <!-- Global Speed Limit -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSpeedLimitEnabled}" Content="Global Speed Limit"
+                                  Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <NumericUpDown Value="{Binding SpeedLimitMb}" Minimum="1" Maximum="1000" Width="110"
+                                           IsEnabled="{Binding IsSpeedLimitEnabled}"
+                                           Background="#151922" BorderBrush="#2A3245" Foreground="#FFFFFF"
+                                           FormatString="{}{0} MB/s"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Right Column: Storage & Paths + Archive Auto-Extractor -->
+            <StackPanel Grid.Column="1" Spacing="16" Margin="12,0,0,0">
+                <!-- Storage & Paths Card -->
+                <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Storage &amp; Paths" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="Default Download Directory" Foreground="#9CA3AF" FontSize="13"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0" Text="{Binding DefaultDownloadDirectory}" Height="34" CornerRadius="6"
+                                     Background="#151922" BorderBrush="#2A3245" Foreground="#FFFFFF" FontSize="12"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="1" Name="BrowseDefaultDirButton" Content="📁" 
+                                    Background="#222836" BorderBrush="#2A3245" CornerRadius="6"
+                                    Padding="10,6" Margin="8,0,0,0" Cursor="Hand" Click="OnBrowseDefaultDirClicked"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Archive Auto-Extractor Card -->
+                <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Archive Auto-Extractor" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Auto-Extract Multi-Part Archives" Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoExtract}" OnContent="" OffContent=""/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Delete Archive Parts After Extraction" Foreground="#D1D5DB" FontSize="14" VerticalAlignment="Center"/>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding DeleteArchiveAfterExtract}" OnContent="" OffContent=""/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- Save Button -->
+        <Button Grid.Row="2" Command="{Binding SaveSettingsCommand}"
+                HorizontalAlignment="Right"
+                Background="#2D8CFF" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"
+                CornerRadius="6" Padding="24,10" Cursor="Hand">
+            <TextBlock Text="Save Settings"/>
+        </Button>
+    </Grid>
+</UserControl>

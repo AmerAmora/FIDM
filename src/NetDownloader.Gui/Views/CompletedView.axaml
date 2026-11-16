@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetDownloader.Gui.ViewModels"
+             x:Class="NetDownloader.Gui.Views.CompletedView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <TextBlock Grid.Row="0" Text="Completed Downloads" 
+                   FontSize="22" FontWeight="SemiBold" 
+                   Foreground="#FFFFFF" Margin="0,0,0,16"/>
+
+        <Border Grid.Row="1" Background="#161B24" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+            <Grid ColumnDefinitions="*,180,100,100,90,110">
+                <TextBlock Grid.Column="0" Text="Name" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13"/>
+                <TextBlock Grid.Column="1" Text="Progress" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" Margin="8,0"/>
+                <TextBlock Grid.Column="2" Text="" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="3" Text="" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="4" Text="Size" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="5" Text="Status" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Packages}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DownloadPackageViewModel">
+                        <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                                CornerRadius="8" Margin="0,0,0,8" Padding="12,10"
+                                IsVisible="{Binding IsCompleted}">
+                            <Grid ColumnDefinitions="*,180,100,100,90,110">
+                                <Grid Grid.Column="0" ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
+                                    <Border Grid.Column="0" Width="26" Height="26" Background="#163828" CornerRadius="6" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"
+                                                   TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                   ToolTip.Tip="{Binding Name}"/>
+                                        <TextBlock Text="Completed Package" FontSize="11" Foreground="#6B7280"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <ProgressBar Grid.Column="1" Value="100" Height="6" CornerRadius="3"
+                                             Foreground="#10B981" Background="#262D3D"
+                                             VerticalAlignment="Center" Margin="8,0"/>
+
+                                <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}" 
+                                           Foreground="#E5E7EB" FontWeight="Medium" FontSize="13" 
+                                           VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                <Border Grid.Column="5" Background="#10B981" CornerRadius="12" 
+                                        Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="Completed" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,0 +1,186 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetDownloader.Gui.ViewModels"
+             x:Class="NetDownloader.Gui.Views.LinkGrabberView"
+             x:DataType="vm:LinkGrabberViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <!-- Page Title -->
+        <TextBlock Grid.Row="0" Text="LinkGrabber" 
+                   FontSize="22" FontWeight="SemiBold" 
+                   Foreground="#FFFFFF" Margin="0,0,0,16"/>
+
+        <!-- Input Links Section -->
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,16">
+            <TextBlock Text="Input Links" FontSize="15" FontWeight="SemiBold" Foreground="#E5E7EB"/>
+            
+            <TextBox Text="{Binding InputText}"
+                     AcceptsReturn="True" TextWrapping="Wrap"
+                     Height="100" CornerRadius="6"
+                     Background="#181D26" BorderBrush="#2D8CFF" BorderThickness="1"
+                     Foreground="#FFFFFF" FontSize="13" Padding="12,10"
+                     Watermark="Paste links here (one per line, e.g. https://server.com/archive.part1.rar)..."/>
+
+            <!-- Analyze Links Button -->
+            <Button Command="{Binding AnalyzeLinksCommand}"
+                    HorizontalAlignment="Right"
+                    Background="#242B38" BorderBrush="#3B82F6" BorderThickness="1"
+                    Foreground="#FFFFFF" FontWeight="Medium"
+                    CornerRadius="6" Padding="16,8" Cursor="Hand">
+                <TextBlock Text="{Binding AnalyzeButtonText}" FontSize="13"/>
+            </Button>
+        </StackPanel>
+
+        <!-- Detected Packages Header -->
+        <TextBlock Grid.Row="2" Text="Detected Packages" FontSize="15" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,0,0,8"/>
+
+        <!-- Detected Packages List -->
+        <Grid Grid.Row="3" RowDefinitions="Auto,*">
+            <!-- Table Header -->
+            <Border Grid.Row="0" Background="#161B24" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*,180,100,100,90,110">
+                    <TextBlock Grid.Column="0" Text="Name" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13"/>
+                    <TextBlock Grid.Column="1" Text="Progress" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" Margin="8,0"/>
+                    <TextBlock Grid.Column="2" Text="Speed" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="3" Text="ETA" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="4" Text="Size" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="5" Text="Status" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Packages / Parts -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding DetectedPackages}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DownloadPackageViewModel">
+                            <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
+                                    CornerRadius="8" Margin="0,0,0,8" Padding="12,10">
+                                <StackPanel Spacing="6">
+                                    <!-- Package Row -->
+                                    <Grid ColumnDefinitions="*,180,100,100,90,110">
+                                        <!-- Constrained Column 0 -->
+                                        <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <ToggleButton Grid.Column="0" IsChecked="{Binding IsExpanded}"
+                                                          Background="Transparent" BorderThickness="0" Padding="4"
+                                                          Cursor="Hand" VerticalAlignment="Center">
+                                                <Panel Width="12" Height="12">
+                                                    <Path Data="M 3,1 L 9,6 L 3,11 Z" Fill="#8F9CAE" Stretch="Uniform"
+                                                          IsVisible="{Binding !IsExpanded}"/>
+                                                    <Path Data="M 1,3 L 6,9 L 11,3 Z" Fill="#2D8CFF" Stretch="Uniform"
+                                                          IsVisible="{Binding IsExpanded}"/>
+                                                </Panel>
+                                            </ToggleButton>
+
+                                            <Border Grid.Column="1" Width="26" Height="26" Background="#332B14" CornerRadius="6" Margin="6,0,10,0" VerticalAlignment="Center">
+                                                <TextBlock Text="📁" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"
+                                                           TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                           ToolTip.Tip="{Binding Name}"/>
+                                                <TextBlock Text="Package" FontSize="11" Foreground="#6B7280"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage}" Height="6" 
+                                                     CornerRadius="3" Foreground="{Binding ProgressBarColor}" Background="#262D3D"
+                                                     VerticalAlignment="Center" Margin="8,0"/>
+
+                                        <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}" 
+                                                   Foreground="#E5E7EB" FontWeight="Medium" FontSize="13" 
+                                                   VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                        <Border Grid.Column="5" Background="{Binding BadgeBackground}" CornerRadius="12" 
+                                                Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                       FontWeight="SemiBold" FontSize="12"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Child Items -->
+                                    <ItemsControl ItemsSource="{Binding Items}" IsVisible="{Binding IsExpanded}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DownloadItemViewModel">
+                                                <Border Background="#161B25" CornerRadius="6" Margin="0,3,0,0" Padding="12,8">
+                                                    <Grid ColumnDefinitions="*,180,100,100,90,110">
+                                                        <!-- Constrained Column 0 -->
+                                                        <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="24,0,12,0">
+                                                            <TextBlock Grid.Column="0" Text="↳" Foreground="#4B5563" FontSize="13" FontWeight="Bold" 
+                                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                            <Border Grid.Column="1" Width="24" Height="24" Background="#1C2738" CornerRadius="4" VerticalAlignment="Center">
+                                                                <TextBlock Text="📄" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                                <TextBlock Text="{Binding FileName}" FontSize="13" Foreground="#F3F4F6"
+                                                                           TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                                           ToolTip.Tip="{Binding FileName}"/>
+                                                                <TextBlock Text="{Binding FormattedSize}" FontSize="11" Foreground="#6B7280"/>
+                                                            </StackPanel>
+                                                        </Grid>
+
+                                                        <TextBlock Grid.Column="1" Text="" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
+
+                                                        <TextBlock Grid.Column="4" Text="{Binding FormattedSize}" 
+                                                                   Foreground="#D1D5DB" FontSize="13" 
+                                                                   VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                                        <Border Grid.Column="5" Background="{Binding BadgeBackground}" 
+                                                                CornerRadius="12" Padding="10,3"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                                       FontWeight="SemiBold" FontSize="11"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Bottom Controls -->
+        <Border Grid.Row="4" Background="#151922" BorderBrush="#262D3D" BorderThickness="0,1,0,0" 
+                Padding="12,14" Margin="0,12,0,0">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <!-- Save To -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Save to:" Foreground="#9CA3AF" FontSize="13" VerticalAlignment="Center"/>
+                    <Button Name="BrowseButton" Content="📁" Background="#1E232F" BorderBrush="#2A3245" 
+                            CornerRadius="6" Padding="8,6" Cursor="Hand" Click="OnBrowseFolderClicked"/>
+                    <TextBox Text="{Binding SaveDirectory}" Width="260" Height="34" CornerRadius="6"
+                             Background="#1C212D" BorderBrush="#2A3245" Foreground="#FFFFFF" FontSize="12"
+                             VerticalContentAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Password -->
+                <TextBox Grid.Column="1" Text="{Binding ExtractionPassword}" 
+                         PasswordChar="•" Watermark="Password (optional)"
+                         Width="200" Height="34" CornerRadius="6" Margin="16,0"
+                         Background="#1C212D" BorderBrush="#2A3245" Foreground="#FFFFFF" FontSize="12"
+                         HorizontalAlignment="Left" VerticalContentAlignment="Center"/>
+
+                <!-- Summary -->
+                <TextBlock Grid.Column="2" Text="{Binding SummaryText}" Foreground="#9CA3AF" FontSize="12" 
+                           VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                <!-- Enqueue & Start Button -->
+                <Button Grid.Column="3" Command="{Binding EnqueueAndStartDownloadsCommand}"
+                        Background="#2D8CFF" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"
+                        CornerRadius="6" Padding="20,10" Cursor="Hand">
+                    <TextBlock Text="Enqueue &amp; Start Downloads"/>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

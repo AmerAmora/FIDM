@@ -1,0 +1,211 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:NetDownloader.Gui.ViewModels"
+        xmlns:views="using:NetDownloader.Gui.Views"
+        x:Class="NetDownloader.Gui.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="NetDownloader"
+        Width="1200" Height="740"
+        MinWidth="960" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        Background="#131722">
+
+    <Grid RowDefinitions="44,48,*,36">
+        <!-- 1. Top Header Bar -->
+        <Border Grid.Row="0" Background="#11141E" BorderBrush="#1C222E" BorderThickness="0,0,0,1" Padding="14,0">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- App Title & Icon -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="↑↓" FontSize="16" FontWeight="Bold" Foreground="#2D8CFF"/>
+                    <TextBlock Text="NetDownloader" FontSize="14" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                </StackPanel>
+
+                <!-- Search Box -->
+                <Grid Grid.Column="2" VerticalAlignment="Center">
+                    <TextBox Text="{Binding SearchFilter}" 
+                             Width="240" Height="30" CornerRadius="6"
+                             Background="#191F2B" BorderBrush="#262D3D" BorderThickness="1"
+                             Foreground="#FFFFFF" FontSize="12" Padding="28,4,8,4"
+                             Watermark="Search" VerticalContentAlignment="Center"/>
+                    <TextBlock Text="🔍" FontSize="11" Foreground="#6B7280" 
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- 2. Action Toolbar -->
+        <Border Grid.Row="1" Background="#141824" BorderBrush="#1C222E" BorderThickness="0,0,0,1" Padding="14,0">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <!-- Start All -->
+                    <Button Classes="action" Command="{Binding StartAllCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="▶" Foreground="#10B981" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="Start All" Foreground="#F3F4F6" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Pause All -->
+                    <Button Classes="action" Command="{Binding PauseAllCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="⏸" Foreground="#F43F5E" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="Pause All" Foreground="#F3F4F6" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Stop -->
+                    <Button Classes="action" Command="{Binding StopAllCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="⏹" Foreground="#EF4444" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="Stop" Foreground="#F3F4F6" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Width="1" Height="20" Background="#262D3D" Margin="6,0"/>
+
+                    <!-- Add URLs -->
+                    <Button Classes="action" Command="{Binding AddUrlsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="+" Foreground="#2D8CFF" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="Add URLs" Foreground="#F3F4F6" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Right Side: Clipboard Monitor Toggle -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="📋 Clipboard Monitor" Foreground="#D1D5DB" FontSize="13" VerticalAlignment="Center"/>
+                    <ToggleSwitch IsChecked="{Binding IsClipboardMonitorEnabled}" OnContent="" OffContent=""/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 3. Main Workspace: Left Sidebar + Page Content -->
+        <Grid Grid.Row="2" ColumnDefinitions="190,*">
+            <!-- Left Navigation Sidebar -->
+            <Border Grid.Column="0" Background="#11151F" BorderBrush="#1C222E" BorderThickness="0,0,1,0" Padding="0,16">
+                <StackPanel Spacing="4">
+                    <!-- Hamburger / Header Icon -->
+                    <TextBlock Text="☰" FontSize="18" Foreground="#8F9CAE" Margin="20,0,0,16"/>
+
+                    <!-- Downloads Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="Downloads"
+                            Background="{Binding DownloadsNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding DownloadsIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="↓" FontSize="15" Foreground="#38BDF8" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Downloads" Foreground="{Binding DownloadsNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- LinkGrabber Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="LinkGrabber"
+                            Background="{Binding LinkGrabberNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding LinkGrabberIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="🔗" FontSize="13" Foreground="#60A5FA" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="LinkGrabber" Foreground="{Binding LinkGrabberNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- Completed Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="Completed"
+                            Background="{Binding CompletedNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding CompletedIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="✓" FontSize="14" Foreground="#10B981" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Completed" Foreground="{Binding CompletedNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- Queues Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="Queues"
+                            Background="{Binding QueuesNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding QueuesIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="≡" FontSize="15" Foreground="#A78BFA" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Queues" Foreground="{Binding QueuesNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- Scheduler Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="Scheduler"
+                            Background="{Binding SchedulerNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding SchedulerIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="📅" FontSize="13" Foreground="#FBBF24" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Scheduler" Foreground="{Binding SchedulerNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- Settings Nav Button -->
+                    <Button Classes="nav" Command="{Binding NavigateCommand}" CommandParameter="Settings"
+                            Background="{Binding SettingsNavBackground}" Padding="0,8">
+                        <Grid ColumnDefinitions="4,16,Auto">
+                            <Border Grid.Column="0" Width="3" Height="20" CornerRadius="1.5" 
+                                    Background="#2D8CFF" HorizontalAlignment="Left"
+                                    IsVisible="{Binding SettingsIndicatorVisible}"/>
+                            <TextBlock Grid.Column="1" Text="⚙" FontSize="14" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Settings" Foreground="{Binding SettingsNavForeground}" Margin="8,0,0,0"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- Dynamic View Area -->
+            <Border Grid.Column="1" Background="#141824" Padding="24,20">
+                <Panel>
+                    <!-- Downloads View -->
+                    <views:DownloadsView IsVisible="{Binding IsDownloadsView}"/>
+
+                    <!-- LinkGrabber View -->
+                    <views:LinkGrabberView DataContext="{Binding LinkGrabberVm}" 
+                                           IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsLinkGrabberView}"/>
+
+                    <!-- Completed View -->
+                    <views:CompletedView IsVisible="{Binding IsCompletedView}"/>
+
+                    <!-- Settings View -->
+                    <views:SettingsView DataContext="{Binding SettingsVm}" 
+                                        IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsSettingsView}"/>
+                </Panel>
+            </Border>
+        </Grid>
+
+        <!-- 4. Bottom Status Bar -->
+        <Border Grid.Row="3" Background="#0E1118" BorderBrush="#1C222E" BorderThickness="0,1,0,0" Padding="16,0">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <!-- Active Tasks & Queue -->
+                <TextBlock Grid.Column="0" Text="{Binding ActiveTasksText}" 
+                           Foreground="#9CA3AF" FontSize="12" VerticalAlignment="Center"/>
+
+                <!-- Aggregate Speed -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,24,0">
+                    <TextBlock Text="Aggregate Speed:" Foreground="#9CA3AF" FontSize="12" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding AggregateSpeedText}" Foreground="#38BDF8" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                    <TextBlock Text="↓" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Speed Limit -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="Speed Limit:" Foreground="#9CA3AF" FontSize="12" VerticalAlignment="Center"/>
+                    <NumericUpDown Value="{Binding SpeedLimitValueMb}" Minimum="1" Maximum="1000" Width="75" Height="28"
+                                   Background="#161B25" BorderBrush="#262D3D" Foreground="#FFFFFF" FontSize="12"
+                                   VerticalContentAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="MB/s" Foreground="#9CA3AF" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
