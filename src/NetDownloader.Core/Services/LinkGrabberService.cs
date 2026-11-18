@@ -35,7 +35,7 @@ public partial class LinkGrabberService : ILinkGrabberService
         var client = new HttpClient(new HttpClientHandler
         {
             AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.All,
+            AutomaticDecompression = DecompressionMethods.None,
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true
         })
         {
@@ -43,7 +43,74 @@ public partial class LinkGrabberService : ILinkGrabberService
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Accept.ParseAdd("*/*");
+        client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
         return client;
+    }
+
+    public static void ApplyDefaultHeaders(HttpRequestMessage request, string url)
+    {
+        if (url.Contains("fuckingfast.co", StringComparison.OrdinalIgnoreCase) && request.Headers.Referrer == null)
+        {
+            request.Headers.Referrer = new Uri("https://fuckingfast.co/");
+        }
+    }
+
+    public static long TryExtractTotalBytesFromHeaders(HttpResponseMessage response)
+    {
+        // 1. Typed Content-Range total length (for 206 Partial Content)
+        try
+        {
+            if (response.Content.Headers.ContentRange?.Length is long crLen && crLen > 0)
+            {
+                return crLen;
+            }
+        }
+        catch { }
+
+        // 2. Raw Content-Range fallback (e.g. "bytes 0-0/524288000")
+        IEnumerable<string>? crValues = null;
+        if (response.Content.Headers.TryGetValues("Content-Range", out var crContentVals))
+        {
+            crValues = crContentVals;
+        }
+        else if (response.Headers.TryGetValues("Content-Range", out var crHeaderVals))
+        {
+            crValues = crHeaderVals;
+        }
+
+        if (crValues != null)
+        {
+            foreach (var raw in crValues)
+            {
+                var m = Regex.Match(raw, @"/\s*(?<total>\d+)\s*$");
+                if (m.Success && long.TryParse(m.Groups["total"].Value, out long parsedTotal) && parsedTotal > 0)
+                {
+                    return parsedTotal;
+                }
+            }
+        }
+
+        // 3. Content-Length (only represents full file size when not 206 Partial Content)
+        if (response.StatusCode != HttpStatusCode.PartialContent)
+        {
+            if (response.Content.Headers.ContentLength is long cl && cl > 0)
+            {
+                return cl;
+            }
+
+            if (response.Content.Headers.TryGetValues("Content-Length", out var clVals))
+            {
+                foreach (var raw in clVals)
+                {
+                    if (long.TryParse(raw.Trim(), out long parsedCl) && parsedCl > 0)
+                    {
+                        return parsedCl;
+                    }
+                }
+            }
+        }
+
+        return -1;
     }
 
     public List<string> ExtractUrls(string content)
@@ -202,6 +269,7 @@ public partial class LinkGrabberService : ILinkGrabberService
         try
         {
             using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
+            ApplyDefaultHeaders(headRequest, url);
             HttpResponseMessage? headResponse = null;
             bool headSucceeded = false;
 
@@ -225,11 +293,11 @@ public partial class LinkGrabberService : ILinkGrabberService
                     ApplyResponseMetadata(headResponse, item);
                 }
 
-                // If HEAD didn't yield a filename with extension (e.g. CDNs that omit Content-Disposition on HEAD),
-                // fall back to a lightweight GET Range: bytes=0-0 to get the real Content-Disposition
-                if (IsGenericOrTokenFileName(item.FileName))
+                // If HEAD didn't yield a filename with extension OR omitted Content-Length,
+                // fall back to a lightweight GET Range: bytes=0-0 to retrieve full headers/size
+                if (IsGenericOrTokenFileName(item.FileName) || item.TotalBytes <= 0)
                 {
-                    await TryProbeWithGetRangeAsync(url, item, cancellationToken);
+                    await TryProbeWithGetRangeAsync(url, item, cancellationToken, keepOnlineOnRangeFailure: true);
                 }
 
                 item.Status = DownloadItemStatus.Online;
@@ -239,7 +307,7 @@ public partial class LinkGrabberService : ILinkGrabberService
             headResponse?.Dispose();
 
             // Fallback to GET with Range: bytes=0-0
-            await TryProbeWithGetRangeAsync(url, item, cancellationToken);
+            await TryProbeWithGetRangeAsync(url, item, cancellationToken, keepOnlineOnRangeFailure: false);
         }
         catch (Exception ex)
         {
@@ -250,11 +318,16 @@ public partial class LinkGrabberService : ILinkGrabberService
         return item;
     }
 
-    private async Task TryProbeWithGetRangeAsync(string url, DownloadItem item, CancellationToken cancellationToken)
+    private async Task TryProbeWithGetRangeAsync(
+        string url,
+        DownloadItem item,
+        CancellationToken cancellationToken,
+        bool keepOnlineOnRangeFailure = false)
     {
         try
         {
             using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
+            ApplyDefaultHeaders(getRequest, url);
             getRequest.Headers.Range = new RangeHeaderValue(0, 0);
 
             using var getResponse = await _httpClient.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -262,8 +335,24 @@ public partial class LinkGrabberService : ILinkGrabberService
             {
                 ApplyResponseMetadata(getResponse, item);
                 item.Status = DownloadItemStatus.Online;
+                return;
             }
-            else
+
+            // If server rejected Range (e.g. 416/400/405), fall back to header-only GET without Range
+            if (getResponse.StatusCode is HttpStatusCode.RequestedRangeNotSatisfiable or HttpStatusCode.BadRequest or HttpStatusCode.MethodNotAllowed)
+            {
+                using var plainGet = new HttpRequestMessage(HttpMethod.Get, url);
+                ApplyDefaultHeaders(plainGet, url);
+                using var plainResp = await _httpClient.SendAsync(plainGet, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (plainResp.IsSuccessStatusCode)
+                {
+                    ApplyResponseMetadata(plainResp, item);
+                    item.Status = DownloadItemStatus.Online;
+                    return;
+                }
+            }
+
+            if (!keepOnlineOnRangeFailure)
             {
                 item.Status = DownloadItemStatus.Offline;
                 if (getResponse.StatusCode == HttpStatusCode.Forbidden)
@@ -278,8 +367,11 @@ public partial class LinkGrabberService : ILinkGrabberService
         }
         catch (Exception ex)
         {
-            item.Status = DownloadItemStatus.Offline;
-            item.ErrorMessage = ex.Message;
+            if (!keepOnlineOnRangeFailure)
+            {
+                item.Status = DownloadItemStatus.Offline;
+                item.ErrorMessage = ex.Message;
+            }
         }
     }
 
@@ -391,16 +483,7 @@ public partial class LinkGrabberService : ILinkGrabberService
         item.SupportsRange = supportsRange;
 
         // Total bytes
-        long totalBytes = -1;
-        if (response.Content.Headers.ContentRange?.Length != null)
-        {
-            totalBytes = response.Content.Headers.ContentRange.Length.Value;
-        }
-        else if (response.Content.Headers.ContentLength != null && response.StatusCode != HttpStatusCode.PartialContent)
-        {
-            totalBytes = response.Content.Headers.ContentLength.Value;
-        }
-
+        long totalBytes = TryExtractTotalBytesFromHeaders(response);
         if (totalBytes > 0 || item.TotalBytes <= 0)
         {
             item.TotalBytes = totalBytes;

@@ -387,22 +387,45 @@ public class DownloadEngine : IDownloadEngine
         item.Status = DownloadItemStatus.Downloading;
         item.ErrorMessage = null;
 
-        // If filename is generic or a bare token (missing extension), attempt a fast probe to resolve real name
-        if (LinkGrabberService.IsGenericOrTokenFileName(item.FileName))
+        // If filename is generic/missing extension OR size is unknown, probe headers before creating .part file
+        if (LinkGrabberService.IsGenericOrTokenFileName(item.FileName) || item.TotalBytes <= 0)
         {
             try
             {
                 using var probeReq = new HttpRequestMessage(HttpMethod.Get, item.Url);
+                LinkGrabberService.ApplyDefaultHeaders(probeReq, item.Url);
                 probeReq.Headers.Range = new RangeHeaderValue(0, 0);
                 using var probeResp = await _httpClient.SendAsync(probeReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                var headerName = LinkGrabberService.TryExtractFileNameFromHeaders(probeResp);
-                if (!string.IsNullOrWhiteSpace(headerName) && !LinkGrabberService.IsGenericOrTokenFileName(headerName))
+
+                if (probeResp.IsSuccessStatusCode || probeResp.StatusCode == HttpStatusCode.PartialContent)
                 {
-                    item.FileName = headerName;
-                    if (LinkGrabberService.IsGenericOrTokenFileName(package.Name) || package.Name.StartsWith("Package_"))
+                    if (LinkGrabberService.IsGenericOrTokenFileName(item.FileName))
                     {
-                        package.Name = LinkGrabberService.DerivePackageNameStatic(headerName);
-                        PackageStatusChanged?.Invoke(this, package);
+                        var headerName = LinkGrabberService.TryExtractFileNameFromHeaders(probeResp);
+                        if (!string.IsNullOrWhiteSpace(headerName) && !LinkGrabberService.IsGenericOrTokenFileName(headerName))
+                        {
+                            item.FileName = headerName;
+                            if (LinkGrabberService.IsGenericOrTokenFileName(package.Name) || package.Name.StartsWith("Package_"))
+                            {
+                                package.Name = LinkGrabberService.DerivePackageNameStatic(headerName);
+                                PackageStatusChanged?.Invoke(this, package);
+                            }
+                        }
+                    }
+
+                    if (item.TotalBytes <= 0)
+                    {
+                        long probedSize = LinkGrabberService.TryExtractTotalBytesFromHeaders(probeResp);
+                        if (probedSize > 0)
+                        {
+                            item.TotalBytes = probedSize;
+                        }
+                    }
+
+                    if (probeResp.StatusCode == HttpStatusCode.PartialContent ||
+                        probeResp.Headers.AcceptRanges.Any(v => string.Equals(v, "bytes", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        item.SupportsRange = true;
                     }
                 }
             }
@@ -525,6 +548,7 @@ public class DownloadEngine : IDownloadEngine
             {
                 long currentOffset = chunk.CurrentByteOffset;
                 using var request = new HttpRequestMessage(HttpMethod.Get, item.Url);
+                LinkGrabberService.ApplyDefaultHeaders(request, item.Url);
                 if (endByte > 0)
                 {
                     request.Headers.Range = new RangeHeaderValue(currentOffset, endByte);
@@ -543,6 +567,15 @@ public class DownloadEngine : IDownloadEngine
                     if (!string.IsNullOrWhiteSpace(detectedName) && !LinkGrabberService.IsGenericOrTokenFileName(detectedName))
                     {
                         item.ServerFileName = detectedName;
+                    }
+
+                    if (item.TotalBytes <= 0)
+                    {
+                        long detectedSize = LinkGrabberService.TryExtractTotalBytesFromHeaders(response);
+                        if (detectedSize > 0)
+                        {
+                            item.TotalBytes = detectedSize;
+                        }
                     }
                 }
 
@@ -620,13 +653,14 @@ public class DownloadEngine : IDownloadEngine
         var client = new HttpClient(new HttpClientHandler
         {
             AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.All
+            AutomaticDecompression = DecompressionMethods.None
         })
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Accept.ParseAdd("*/*");
+        client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
         return client;
     }
 

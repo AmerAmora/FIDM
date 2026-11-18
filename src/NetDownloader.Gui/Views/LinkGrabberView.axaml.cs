@@ -28,4 +28,23 @@ public partial class LinkGrabberView : UserControl
             vm.SaveDirectory = folders[0].Path.LocalPath;
         }
     }
+
+    private async void OnPasteClipboardClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.Clipboard == null || DataContext is not LinkGrabberViewModel vm) return;
+
+        try
+        {
+            var text = await topLevel.Clipboard.GetTextAsync();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                vm.AddRawUrl(text.Trim());
+            }
+        }
+        catch
+        {
+            // Ignore clipboard access error
+        }
+    }
 }

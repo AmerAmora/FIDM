@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "NetDownloader Integration",
+  "version": "1.0.0",
+  "description": "High-speed 1-Click download manager integration and direct link resolver for NetDownloader.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "NetDownloader"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.fuckingfast.co/*",
+        "https://fuckingfast.co/*",
+        "https://*.fitgirl-repacks.site/*",
+        "https://fitgirl-repacks.site/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "alarms",
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://*.fuckingfast.co/*",
+    "https://fuckingfast.co/*",
+    "https://*.fitgirl-repacks.site/*",
+    "https://fitgirl-repacks.site/*",
+    "<all_urls>"
+  ]
+}

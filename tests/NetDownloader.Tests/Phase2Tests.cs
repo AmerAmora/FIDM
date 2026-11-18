@@ -223,4 +223,62 @@ public class Phase2Tests
         Assert.Equal(DownloadItemStatus.Online, item.Status);
         Assert.Equal("Bloodborne_--_fitgirl-repacks.site_--_.part3.rar", item.FileName);
     }
+
+    [Fact]
+    public async Task ProbeUrlAsync_WhenHeadOmitsContentLength_ShouldFallbackToGetRangeAndResolveSize()
+    {
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            if (req.Method == HttpMethod.Head)
+            {
+                // HEAD succeeds with 200 OK but omits Content-Length
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(Array.Empty<byte>())
+                };
+            }
+
+            Assert.Equal(HttpMethod.Get, req.Method);
+            var getResp = new HttpResponseMessage(HttpStatusCode.PartialContent);
+            getResp.Content = new ByteArrayContent(new byte[] { 0x01 });
+            getResp.Content.Headers.ContentRange = new ContentRangeHeaderValue(0, 0, 524288000);
+            return getResp;
+        });
+
+        var httpClient = new HttpClient(handler);
+        var grabber = new LinkGrabberService(httpClient);
+
+        var item = await grabber.ProbeUrlAsync("https://dl.fuckingfast.co/dl/token123#God_of_War_III_Remastered_--_fitgirl-repacks.site_--_.part1.rar");
+
+        Assert.Equal(DownloadItemStatus.Online, item.Status);
+        Assert.Equal("God_of_War_III_Remastered_--_fitgirl-repacks.site_--_.part1.rar", item.FileName);
+        Assert.Equal(524288000, item.TotalBytes);
+        Assert.True(item.SupportsRange);
+    }
+
+    [Fact]
+    public async Task ProbeUrlAsync_WithRawContentRangeHeader_ShouldExtractTotalBytes()
+    {
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            if (req.Method == HttpMethod.Head)
+            {
+                return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
+            }
+
+            var getResp = new HttpResponseMessage(HttpStatusCode.PartialContent);
+            getResp.Content = new ByteArrayContent(new byte[] { 0x01 });
+            getResp.Content.Headers.TryAddWithoutValidation("Content-Range", "bytes 0-0/1073741824");
+            return getResp;
+        });
+
+        var httpClient = new HttpClient(handler);
+        var grabber = new LinkGrabberService(httpClient);
+
+        var item = await grabber.ProbeUrlAsync("https://dl.fuckingfast.co/dl/token123#archive.part2.rar");
+
+        Assert.Equal(DownloadItemStatus.Online, item.Status);
+        Assert.Equal(1073741824, item.TotalBytes);
+        Assert.True(item.SupportsRange);
+    }
 }

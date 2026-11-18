@@ -3,50 +3,127 @@
              x:Class="NetDownloader.Gui.App"
              RequestedThemeVariant="Dark">
     <Application.Resources>
-        <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="#131722"/>
-        <SolidColorBrush x:Key="ThemeCardBrush" Color="#1E232F"/>
-        <SolidColorBrush x:Key="ThemeBorderBrush" Color="#262D3D"/>
-        <SolidColorBrush x:Key="ThemeAccentBrush" Color="#2D8CFF"/>
-        <SolidColorBrush x:Key="ThemeTextPrimary" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="ThemeTextSecondary" Color="#8F9CAE"/>
+        <SolidColorBrush x:Key="ThemeShellBrush" Color="#090C12"/>
+        <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="#0D1119"/>
+        <SolidColorBrush x:Key="ThemeCardBrush" Color="#121824"/>
+        <SolidColorBrush x:Key="ThemeCardRecessedBrush" Color="#0B0F17"/>
+        <SolidColorBrush x:Key="ThemeBorderBrush" Color="#1E2738"/>
+        <SolidColorBrush x:Key="ThemeBorderSubtleBrush" Color="#172030"/>
+        <SolidColorBrush x:Key="ThemeAccentBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="ThemeCyanBrush" Color="#0EA5E9"/>
+        <SolidColorBrush x:Key="ThemeTextPrimary" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="ThemeTextSecondary" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="ThemeTextMuted" Color="#64748B"/>
+
+        <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Color="#3B82F6" Offset="0.0"/>
+            <GradientStop Color="#0EA5E9" Offset="1.0"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="PrimaryHoverGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Color="#2563EB" Offset="0.0"/>
+            <GradientStop Color="#0284C7" Offset="1.0"/>
+        </LinearGradientBrush>
     </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 
-        <!-- Custom Sidebar Button Style -->
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
+        </Style>
+
+        <!-- Sidebar Navigation Button -->
         <Style Selector="Button.nav">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,9"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Foreground" Value="#8F9CAE"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Foreground" Value="#8B98AD"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1C222F"/>
+            <Setter Property="Background" Value="#121A29"/>
+        </Style>
+
+        <!-- Subtle Command Bar Button -->
+        <Style Selector="Button.toolbar">
+            <Setter Property="Background" Value="#131926"/>
+            <Setter Property="BorderBrush" Value="#202A3D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="CornerRadius" Value="7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1B2436"/>
+            <Setter Property="BorderBrush" Value="#2E3D59"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
         </Style>
 
-        <!-- Custom Action Bar Button Style -->
-        <Style Selector="Button.action">
-            <Setter Property="Background" Value="Transparent"/>
+        <!-- Primary Gradient CTA Button -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource PrimaryGradientBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#D1D5DB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,9"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
-        <Style Selector="Button.action:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1F2635"/>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryHoverGradientBrush}"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+
+        <!-- Inline Package Row Icon Action Button -->
+        <Style Selector="Button.icon-btn">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#151D2C"/>
+            <Setter Property="BorderBrush" Value="#202B3F"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.icon-btn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#212E45"/>
+            <Setter Property="BorderBrush" Value="#35486B"/>
+        </Style>
+
+        <!-- TextBox Modern Styling -->
+        <Style Selector="TextBox.modern">
+            <Setter Property="Background" Value="#0A0E16"/>
+            <Setter Property="BorderBrush" Value="#1E2738"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Foreground" Value="#F1F5F9"/>
+            <Setter Property="CaretBrush" Value="#38BDF8"/>
+            <Setter Property="SelectionBrush" Value="#333B82F6"/>
+        </Style>
+        <Style Selector="TextBox.modern:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#0A0E16"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="TextBox.modern:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#0C111B"/>
+            <Setter Property="BorderBrush" Value="#2B3852"/>
         </Style>
     </Application.Styles>
 </Application>

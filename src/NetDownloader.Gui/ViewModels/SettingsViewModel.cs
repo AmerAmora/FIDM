@@ -35,6 +35,12 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _deleteArchiveAfterExtract;
 
+    [ObservableProperty]
+    private string _saveStatusMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSaveStatusVisible;
+
     public SettingsViewModel(IDownloadEngine engine, IStateStore stateStore)
     {
         _engine = engine;
@@ -71,5 +77,13 @@ public partial class SettingsViewModel : ObservableObject
 
         _engine.UpdateConfiguration(cfg);
         await _stateStore.SaveSettingsAsync(cfg);
+
+        SaveStatusMessage = "Settings saved & applied";
+        IsSaveStatusVisible = true;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => IsSaveStatusVisible = false);
+        });
     }
 }

@@ -38,28 +38,28 @@ public partial class MainWindowViewModel : ObservableObject
     public bool IsSchedulerView => CurrentPage == NavigationPage.Scheduler;
     public bool IsSettingsView => CurrentPage == NavigationPage.Settings;
 
-    public string DownloadsNavBackground => IsDownloadsView ? "#1E2533" : "Transparent";
-    public string DownloadsNavForeground => IsDownloadsView ? "#FFFFFF" : "#8F9CAE";
+    public string DownloadsNavBackground => IsDownloadsView ? "#162033" : "Transparent";
+    public string DownloadsNavForeground => IsDownloadsView ? "#F8FAFC" : "#8B98AD";
     public bool DownloadsIndicatorVisible => IsDownloadsView;
 
-    public string LinkGrabberNavBackground => IsLinkGrabberView ? "#1E2533" : "Transparent";
-    public string LinkGrabberNavForeground => IsLinkGrabberView ? "#FFFFFF" : "#8F9CAE";
+    public string LinkGrabberNavBackground => IsLinkGrabberView ? "#162033" : "Transparent";
+    public string LinkGrabberNavForeground => IsLinkGrabberView ? "#F8FAFC" : "#8B98AD";
     public bool LinkGrabberIndicatorVisible => IsLinkGrabberView;
 
-    public string CompletedNavBackground => IsCompletedView ? "#1E2533" : "Transparent";
-    public string CompletedNavForeground => IsCompletedView ? "#FFFFFF" : "#8F9CAE";
+    public string CompletedNavBackground => IsCompletedView ? "#162033" : "Transparent";
+    public string CompletedNavForeground => IsCompletedView ? "#F8FAFC" : "#8B98AD";
     public bool CompletedIndicatorVisible => IsCompletedView;
 
-    public string QueuesNavBackground => IsQueuesView ? "#1E2533" : "Transparent";
-    public string QueuesNavForeground => IsQueuesView ? "#FFFFFF" : "#8F9CAE";
+    public string QueuesNavBackground => IsQueuesView ? "#162033" : "Transparent";
+    public string QueuesNavForeground => IsQueuesView ? "#F8FAFC" : "#8B98AD";
     public bool QueuesIndicatorVisible => IsQueuesView;
 
-    public string SchedulerNavBackground => IsSchedulerView ? "#1E2533" : "Transparent";
-    public string SchedulerNavForeground => IsSchedulerView ? "#FFFFFF" : "#8F9CAE";
+    public string SchedulerNavBackground => IsSchedulerView ? "#162033" : "Transparent";
+    public string SchedulerNavForeground => IsSchedulerView ? "#F8FAFC" : "#8B98AD";
     public bool SchedulerIndicatorVisible => IsSchedulerView;
 
-    public string SettingsNavBackground => IsSettingsView ? "#1E2533" : "Transparent";
-    public string SettingsNavForeground => IsSettingsView ? "#FFFFFF" : "#8F9CAE";
+    public string SettingsNavBackground => IsSettingsView ? "#162033" : "Transparent";
+    public string SettingsNavForeground => IsSettingsView ? "#F8FAFC" : "#8B98AD";
     public bool SettingsIndicatorVisible => IsSettingsView;
 
     partial void OnCurrentPageChanged(NavigationPage value)
@@ -103,7 +103,7 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _isClipboardMonitorEnabled;
 
     [ObservableProperty]
-    private string _activeTasksText = "0 active tasks  •  Total Queue: 0";
+    private string _activeTasksText = "0 active  •  0 total";
 
     [ObservableProperty]
     private string _aggregateSpeedText = "--";
@@ -113,6 +113,33 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusBarExtraText = string.Empty;
+
+    [ObservableProperty]
+    private string _serverPortText = "CNL :9666";
+
+    [ObservableProperty]
+    private int _allPackagesCount;
+
+    [ObservableProperty]
+    private int _activeCount;
+
+    [ObservableProperty]
+    private int _completedCount;
+
+    [ObservableProperty]
+    private bool _hasAnyPackages;
+
+    [ObservableProperty]
+    private bool _hasCompletedPackages;
+
+    partial void OnSearchFilterChanged(string value)
+    {
+        foreach (var pkg in Packages)
+        {
+            pkg.ApplySearchFilter(value);
+        }
+        UpdateCounters();
+    }
 
     public ObservableCollection<DownloadPackageViewModel> Packages { get; } = new();
 
@@ -188,7 +215,9 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 if (!existingIds.Contains(pkg.Id))
                 {
-                    Packages.Add(new DownloadPackageViewModel(pkg));
+                    var vm = new DownloadPackageViewModel(pkg);
+                    vm.ApplySearchFilter(SearchFilter);
+                    Packages.Add(vm);
                 }
             }
 
@@ -206,6 +235,7 @@ public partial class MainWindowViewModel : ObservableObject
             foreach (var pkgVm in Packages)
             {
                 pkgVm.SyncFromModel();
+                pkgVm.ApplySearchFilter(SearchFilter);
             }
 
             UpdateStatusText();
@@ -217,12 +247,14 @@ public partial class MainWindowViewModel : ObservableObject
         Dispatcher.UIThread.Post(() =>
         {
             AggregateSpeedText = FormatHelper.FormatSpeed(e.AggregateSpeedBytesPerSecond);
-            ActiveTasksText = $"{e.ActiveTasksCount} active tasks  •  Total Queue: {e.TotalQueueCount}";
+            ActiveTasksText = $"{e.ActiveTasksCount} active  •  {e.TotalQueueCount} queued";
 
             foreach (var pkgVm in Packages)
             {
                 pkgVm.SyncFromModel();
             }
+
+            UpdateCounters();
         });
     }
 
@@ -234,10 +266,13 @@ public partial class MainWindowViewModel : ObservableObject
             if (match != null)
             {
                 match.SyncFromModel();
+                match.ApplySearchFilter(SearchFilter);
             }
             else
             {
-                Packages.Add(new DownloadPackageViewModel(package));
+                var vm = new DownloadPackageViewModel(package);
+                vm.ApplySearchFilter(SearchFilter);
+                Packages.Add(vm);
             }
             UpdateStatusText();
         });
@@ -249,6 +284,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             var match = Packages.FirstOrDefault(p => p.Id == package.Id);
             match?.SyncFromModel();
+            match?.ApplySearchFilter(SearchFilter);
             UpdateStatusText();
         });
     }
@@ -257,7 +293,18 @@ public partial class MainWindowViewModel : ObservableObject
     {
         int active = _engine.ActiveTasksCount;
         int total = _engine.Packages.Count;
-        ActiveTasksText = $"{active} active tasks  •  Total Queue: {total}";
+        ActiveTasksText = $"{active} active  •  {total} total";
+        ServerPortText = _clickAndLoadServer.IsRunning ? $"CNL :{_clickAndLoadServer.Port}" : "CNL Offline";
+        UpdateCounters();
+    }
+
+    private void UpdateCounters()
+    {
+        AllPackagesCount = Packages.Count;
+        ActiveCount = _engine.ActiveTasksCount;
+        CompletedCount = Packages.Count(p => p.IsCompleted);
+        HasAnyPackages = Packages.Any(p => p.IsVisibleInDownloads);
+        HasCompletedPackages = Packages.Any(p => p.IsVisibleInCompleted);
     }
 
     [RelayCommand]
@@ -318,6 +365,18 @@ public partial class MainWindowViewModel : ObservableObject
         if (pkgVm == null) return;
         await _engine.RemovePackageAsync(pkgVm.Id, deleteFiles: false);
         Packages.Remove(pkgVm);
+        UpdateStatusText();
+    }
+
+    [RelayCommand]
+    public async Task ClearCompletedAsync()
+    {
+        var completed = Packages.Where(p => p.IsCompleted).ToList();
+        foreach (var pkgVm in completed)
+        {
+            await _engine.RemovePackageAsync(pkgVm.Id, deleteFiles: false);
+            Packages.Remove(pkgVm);
+        }
         UpdateStatusText();
     }
 

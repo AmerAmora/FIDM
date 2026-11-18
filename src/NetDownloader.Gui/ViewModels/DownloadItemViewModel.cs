@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetDownloader.Core.Models;
@@ -10,12 +11,14 @@ public partial class DownloadItemViewModel : ObservableObject
 {
     private readonly DownloadItem _model;
     private long _lastDownloadedBytes;
+    private long _lastSampleTimestamp;
     private long _currentSpeed;
 
     public DownloadItem Model => _model;
 
     public Guid Id => _model.Id;
     public string Url => _model.Url;
+    public long CurrentSpeed => _model.Status == DownloadItemStatus.Downloading ? _currentSpeed : 0;
 
     [ObservableProperty]
     private string _fileName = string.Empty;
@@ -39,13 +42,19 @@ public partial class DownloadItemViewModel : ObservableObject
     private string _statusText = "Queued";
 
     [ObservableProperty]
-    private string _badgeBackground = "#374151";
+    private string _badgeBackground = "#1F64748B";
 
     [ObservableProperty]
-    private string _badgeForeground = "#FFFFFF";
+    private string _badgeBorder = "#4064748B";
 
     [ObservableProperty]
-    private string _progressBarColor = "#2D8CFF";
+    private string _badgeForeground = "#94A3B8";
+
+    [ObservableProperty]
+    private string _progressSubtitle = "--";
+
+    [ObservableProperty]
+    private string _progressBarColor = "#3B82F6";
 
     [ObservableProperty]
     private bool _isCompleted;
@@ -78,16 +87,91 @@ public partial class DownloadItemViewModel : ObservableObject
 
     public void SyncFromModel()
     {
-        Dispatcher.UIThread.Post(() =>
+        void Apply()
         {
             FileName = _model.FileName;
             FormattedSize = FormatHelper.FormatBytes(_model.TotalBytes);
             FormattedDownloaded = FormatHelper.FormatBytes(_model.DownloadedBytes);
             ProgressPercentage = _model.ProgressPercentage;
 
+            RefreshSpeedAndEtaOnUiThread();
             UpdateStatusPresentation();
             UpdateVisualChunks();
-        });
+
+            if (IsCompleted)
+            {
+                ProgressSubtitle = _model.TotalBytes > 0 ? $"{FormattedSize}  •  100%" : "Completed";
+            }
+            else if (_model.TotalBytes > 0 && _model.DownloadedBytes > 0)
+            {
+                ProgressSubtitle = $"{FormattedDownloaded} / {FormattedSize}  •  {ProgressPercentage:0.#}%";
+            }
+            else if (_model.DownloadedBytes > 0)
+            {
+                ProgressSubtitle = $"{FormattedDownloaded} downloaded";
+            }
+            else
+            {
+                ProgressSubtitle = FormattedSize;
+            }
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            Apply();
+        else
+            Dispatcher.UIThread.Post(Apply);
+    }
+
+    private void RefreshSpeedAndEtaOnUiThread()
+    {
+        if (_model.Status == DownloadItemStatus.Downloading)
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (_lastSampleTimestamp == 0)
+            {
+                _lastSampleTimestamp = now;
+                _lastDownloadedBytes = _model.DownloadedBytes;
+            }
+            else
+            {
+                double elapsedSeconds = (double)(now - _lastSampleTimestamp) / Stopwatch.Frequency;
+                if (elapsedSeconds >= 0.2)
+                {
+                    long deltaBytes = Math.Max(0, _model.DownloadedBytes - _lastDownloadedBytes);
+                    long instantSpeed = (long)(deltaBytes / elapsedSeconds);
+                    _currentSpeed = _currentSpeed == 0 ? instantSpeed : (long)(0.7 * _currentSpeed + 0.3 * instantSpeed);
+
+                    _lastDownloadedBytes = _model.DownloadedBytes;
+                    _lastSampleTimestamp = now;
+                }
+            }
+
+            SpeedString = FormatHelper.FormatSpeed(_currentSpeed);
+            if (_model.TotalBytes > 0)
+            {
+                long remaining = Math.Max(0, _model.TotalBytes - _model.DownloadedBytes);
+                EtaString = FormatHelper.FormatEta(remaining, _currentSpeed);
+            }
+            else
+            {
+                EtaString = "--";
+            }
+        }
+        else if (_model.Status == DownloadItemStatus.Extracting)
+        {
+            _currentSpeed = 0;
+            _lastSampleTimestamp = 0;
+            SpeedString = "--";
+            EtaString = "Extracting...";
+        }
+        else
+        {
+            _currentSpeed = 0;
+            _lastSampleTimestamp = 0;
+            _lastDownloadedBytes = _model.DownloadedBytes;
+            SpeedString = "--";
+            EtaString = "--";
+        }
     }
 
     public void UpdateSpeedAndEta(long bytesTransferredInInterval, double intervalSeconds)
@@ -101,8 +185,15 @@ public partial class DownloadItemViewModel : ObservableObject
 
                 SpeedString = FormatHelper.FormatSpeed(_currentSpeed);
 
-                long remaining = Math.Max(0, _model.TotalBytes - _model.DownloadedBytes);
-                EtaString = FormatHelper.FormatEta(remaining, _currentSpeed);
+                if (_model.TotalBytes > 0)
+                {
+                    long remaining = Math.Max(0, _model.TotalBytes - _model.DownloadedBytes);
+                    EtaString = FormatHelper.FormatEta(remaining, _currentSpeed);
+                }
+                else
+                {
+                    EtaString = "--";
+                }
             }
             else if (_model.Status == DownloadItemStatus.Extracting)
             {
@@ -163,58 +254,66 @@ public partial class DownloadItemViewModel : ObservableObject
         {
             case DownloadItemStatus.Downloading:
                 StatusText = "Downloading";
-                BadgeBackground = "#2563EB"; // Blue
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#2D8CFF";
+                BadgeBackground = "#1F3B82F6";
+                BadgeBorder = "#4D3B82F6";
+                BadgeForeground = "#60A5FA";
+                ProgressBarColor = "#3B82F6";
                 IsExtracting = false;
                 break;
             case DownloadItemStatus.Extracting:
                 StatusText = "Extracting";
-                BadgeBackground = "#D97706"; // Amber
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#D97706";
+                BadgeBackground = "#1FF59E0B";
+                BadgeBorder = "#4DF59E0B";
+                BadgeForeground = "#FBBF24";
+                ProgressBarColor = "#F59E0B";
                 IsExtracting = true;
                 break;
             case DownloadItemStatus.Completed:
                 StatusText = "Completed";
-                BadgeBackground = "#10B981"; // Emerald
-                BadgeForeground = "#FFFFFF";
+                BadgeBackground = "#1F10B981";
+                BadgeBorder = "#4D10B981";
+                BadgeForeground = "#34D399";
                 ProgressBarColor = "#10B981";
                 IsExtracting = false;
                 break;
             case DownloadItemStatus.Online:
                 StatusText = "Online";
-                BadgeBackground = "#059669"; // Green
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#059669";
+                BadgeBackground = "#1F10B981";
+                BadgeBorder = "#4D10B981";
+                BadgeForeground = "#34D399";
+                ProgressBarColor = "#10B981";
                 IsExtracting = false;
                 break;
             case DownloadItemStatus.Offline:
                 StatusText = "Offline";
-                BadgeBackground = "#6B7280"; // Gray
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#6B7280";
+                BadgeBackground = "#1FEF4444";
+                BadgeBorder = "#4DEF4444";
+                BadgeForeground = "#F87171";
+                ProgressBarColor = "#EF4444";
                 IsExtracting = false;
                 break;
             case DownloadItemStatus.Paused:
                 StatusText = "Paused";
-                BadgeBackground = "#4B5563"; // Gray
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#4B5563";
+                BadgeBackground = "#1FF59E0B";
+                BadgeBorder = "#4DF59E0B";
+                BadgeForeground = "#FBBF24";
+                ProgressBarColor = "#F59E0B";
                 IsExtracting = false;
                 break;
             case DownloadItemStatus.Failed:
                 StatusText = "Failed";
-                BadgeBackground = "#DC2626"; // Red
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#DC2626";
+                BadgeBackground = "#1FEF4444";
+                BadgeBorder = "#4DEF4444";
+                BadgeForeground = "#F87171";
+                ProgressBarColor = "#EF4444";
                 IsExtracting = false;
                 break;
             default:
                 StatusText = "Queued";
-                BadgeBackground = "#374151";
-                BadgeForeground = "#FFFFFF";
-                ProgressBarColor = "#2D8CFF";
+                BadgeBackground = "#1F64748B";
+                BadgeBorder = "#4064748B";
+                BadgeForeground = "#94A3B8";
+                ProgressBarColor = "#3B82F6";
                 IsExtracting = false;
                 break;
         }

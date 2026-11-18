@@ -1,0 +1,8 @@
+/* NetDownloader Content Script Global Host Styling */
+#nd-shadow-host {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  all: initial;
+}

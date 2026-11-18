@@ -22,7 +22,10 @@ public partial class LinkGrabberViewModel : ObservableObject
     private bool _isAnalyzing;
 
     [ObservableProperty]
-    private string _analyzeButtonText = "✨ Analyze Links";
+    private bool _hasDetectedPackages;
+
+    [ObservableProperty]
+    private string _analyzeButtonText = "Analyze Links";
 
     [ObservableProperty]
     private string _saveDirectory = string.Empty;
@@ -83,7 +86,13 @@ public partial class LinkGrabberViewModel : ObservableObject
                     DetectedPackages.Add(new DownloadPackageViewModel(pkg));
                 }
 
-                SummaryText = $"{DetectedPackages.Count} packages • {FormatHelper.FormatBytes(totalBytes)} total";
+                var sizeText = totalBytes > 0
+                    ? $"{FormatHelper.FormatBytes(totalBytes)} total"
+                    : "Unknown size";
+                HasDetectedPackages = DetectedPackages.Count > 0;
+                SummaryText = HasDetectedPackages
+                    ? $"{DetectedPackages.Count} package(s)  •  {sizeText}"
+                    : "0 packages  •  0 B total";
             });
         }
         catch (Exception ex)
@@ -96,8 +105,18 @@ public partial class LinkGrabberViewModel : ObservableObject
         finally
         {
             IsAnalyzing = false;
-            AnalyzeButtonText = "✨ Analyze Links";
+            AnalyzeButtonText = "Analyze Links";
         }
+    }
+
+    [RelayCommand]
+    public void ClearInput()
+    {
+        InputText = string.Empty;
+        PreferredPackageName = null;
+        DetectedPackages.Clear();
+        HasDetectedPackages = false;
+        SummaryText = "0 packages  •  0 B total";
     }
 
     [RelayCommand]
@@ -130,8 +149,9 @@ public partial class LinkGrabberViewModel : ObservableObject
         Dispatcher.UIThread.Post(() =>
         {
             DetectedPackages.Clear();
+            HasDetectedPackages = false;
             InputText = string.Empty;
-            SummaryText = "0 packages • 0 B total";
+            SummaryText = "0 packages  •  0 B total";
             _onEnqueuedNavigation();
         });
     }

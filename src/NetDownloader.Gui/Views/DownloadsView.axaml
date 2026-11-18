@@ -5,130 +5,246 @@
              x:DataType="vm:MainWindowViewModel">
 
     <Grid RowDefinitions="Auto,Auto,*">
-        <!-- Page Title -->
-        <TextBlock Grid.Row="0" Text="Downloads" 
-                   FontSize="22" FontWeight="SemiBold" 
-                   Foreground="#FFFFFF" Margin="0,0,0,16"/>
+        <!-- 1. Page Header + Live Summary Pills -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,18">
+            <StackPanel Grid.Column="0" Spacing="3">
+                <TextBlock Text="Transfer Queue" FontSize="22" FontWeight="Bold" Foreground="#F8FAFC"/>
+                <TextBlock Text="Multi-connection segmented downloads &amp; automatic archive extraction"
+                           FontSize="12.5" Foreground="#64748B"/>
+            </StackPanel>
 
-        <!-- Table Header -->
-        <Border Grid.Row="1" Background="#161B24" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
-            <Grid ColumnDefinitions="*,180,100,100,90,110">
-                <TextBlock Grid.Column="0" Text="Name" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13"/>
-                <TextBlock Grid.Column="1" Text="Progress" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" Margin="8,0"/>
-                <TextBlock Grid.Column="2" Text="Speed" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                <TextBlock Grid.Column="3" Text="ETA" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                <TextBlock Grid.Column="4" Text="Size" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                <TextBlock Grid.Column="5" Text="Status" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Center"/>
+            <!-- Compact KPI Strip -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Border Background="#111724" BorderBrush="#1D273B" BorderThickness="1" CornerRadius="9" Padding="13,7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="SPEED" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding AggregateSpeedText}" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Background="#111724" BorderBrush="#1D273B" BorderThickness="1" CornerRadius="9" Padding="13,7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="ACTIVE" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ActiveCount}" FontSize="13" FontWeight="Bold" Foreground="#60A5FA" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Background="#111724" BorderBrush="#1D273B" BorderThickness="1" CornerRadius="9" Padding="13,7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="DONE" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding CompletedCount}" FontSize="13" FontWeight="Bold" Foreground="#34D399" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- 2. Column Header Bar -->
+        <Border Grid.Row="1" Background="#101520" BorderBrush="#1B2436" BorderThickness="1"
+                CornerRadius="8" Padding="14,9" Margin="0,0,0,10"
+                IsVisible="{Binding HasAnyPackages}">
+            <Grid ColumnDefinitions="*,180,95,90,85,104,100">
+                <TextBlock Grid.Column="0" Text="PACKAGE / FILE" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6"/>
+                <TextBlock Grid.Column="1" Text="PROGRESS" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" Margin="8,0"/>
+                <TextBlock Grid.Column="2" Text="SPEED" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="3" Text="ETA" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="4" Text="SIZE" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Right" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="5" Text="STATUS" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Center"/>
+                <TextBlock Grid.Column="6" Text="ACTIONS" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Right" Margin="0,0,4,0"/>
             </Grid>
         </Border>
 
-        <!-- Package & Child Items List -->
-        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <!-- 3A. Empty State Card -->
+        <Border Grid.Row="2" IsVisible="{Binding !HasAnyPackages}"
+                Background="#101520" BorderBrush="#1B2436" BorderThickness="1"
+                CornerRadius="14" Padding="42,48"
+                HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460">
+            <StackPanel Spacing="14" HorizontalAlignment="Center">
+                <Border Width="56" Height="56" CornerRadius="16" Background="#132036" BorderBrush="#21385E" BorderThickness="1"
+                        HorizontalAlignment="Center">
+                    <Path Data="M 12,4 L 12,15 M 8,11 L 12,15 L 16,11 M 4,17 L 4,19 A 2,2 0 0 0 6,21 L 18,21 A 2,2 0 0 0 20,19 L 20,17"
+                          Stroke="#38BDF8" StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
+                          Width="26" Height="26" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="No downloads in queue" FontSize="17" FontWeight="SemiBold" Foreground="#F8FAFC" HorizontalAlignment="Center"/>
+                <TextBlock Text="Send links in 1 click from the NetDownloader browser extension, or paste direct archive URLs into LinkGrabber."
+                           FontSize="13" Foreground="#8B98AD" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20"/>
+                <Button Classes="primary" Command="{Binding AddUrlsCommand}" HorizontalAlignment="Center" Margin="0,6,0,0" Padding="20,10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Data="M 12,5 L 12,19 M 5,12 L 19,12" Stroke="#FFFFFF" StrokeThickness="2.2" StrokeLineCap="Round"
+                              Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Open LinkGrabber" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- 3B. Package & Child Parts List -->
+        <ScrollViewer Grid.Row="2" IsVisible="{Binding HasAnyPackages}"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Packages}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:DownloadPackageViewModel">
-                        <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
-                                CornerRadius="8" Margin="0,0,0,8" Padding="12,10">
+                        <Border Background="#121824" BorderBrush="#1E2738" BorderThickness="1"
+                                CornerRadius="11" Margin="0,0,0,10" Padding="14,12"
+                                IsVisible="{Binding IsVisibleInDownloads}">
                             <Border.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="▶ Resume Package" 
+                                    <MenuItem Header="Resume / Start Package"
                                               Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ResumePackageCommand}"
                                               CommandParameter="{Binding}"/>
-                                    <MenuItem Header="⏸ Pause Package" 
+                                    <MenuItem Header="Pause Package"
                                               Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).PausePackageCommand}"
                                               CommandParameter="{Binding}"/>
                                     <Separator/>
-                                    <MenuItem Header="📁 Open Folder" 
+                                    <MenuItem Header="Open Destination Folder"
                                               Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).OpenPackageFolderCommand}"
                                               CommandParameter="{Binding}"/>
-                                    <MenuItem Header="❌ Remove Package" 
+                                    <MenuItem Header="Remove from Queue"
                                               Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).RemovePackageCommand}"
                                               CommandParameter="{Binding}"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
 
-                            <StackPanel Spacing="6">
-                                <!-- Package Row -->
-                                <Grid ColumnDefinitions="*,180,100,100,90,110">
-                                    <!-- Name & Chevron (Constrained!) -->
+                            <StackPanel Spacing="8">
+                                <!-- Parent Package Row -->
+                                <Grid ColumnDefinitions="*,180,95,90,85,104,100">
+                                    <!-- Column 0: Expand Toggle + Vector Folder Badge + Name/Subtitle -->
                                     <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
                                         <ToggleButton Grid.Column="0" IsChecked="{Binding IsExpanded}"
-                                                      Background="Transparent" BorderThickness="0" Padding="4"
+                                                      Background="Transparent" BorderThickness="0" Padding="5"
                                                       Cursor="Hand" VerticalAlignment="Center">
                                             <Panel Width="12" Height="12">
-                                                <Path Data="M 3,1 L 9,6 L 3,11 Z" Fill="#8F9CAE" Stretch="Uniform"
+                                                <Path Data="M 4,2 L 10,6 L 4,10" Stroke="#64748B" StrokeThickness="1.8"
+                                                      StrokeLineCap="Round" StrokeJoin="Round" Stretch="Uniform"
                                                       IsVisible="{Binding !IsExpanded}"/>
-                                                <Path Data="M 1,3 L 6,9 L 11,3 Z" Fill="#2D8CFF" Stretch="Uniform"
+                                                <Path Data="M 2,4 L 6,10 L 10,4" Stroke="#38BDF8" StrokeThickness="1.8"
+                                                      StrokeLineCap="Round" StrokeJoin="Round" Stretch="Uniform"
                                                       IsVisible="{Binding IsExpanded}"/>
                                             </Panel>
                                         </ToggleButton>
 
-                                        <!-- Folder Icon -->
-                                        <Border Grid.Column="1" Width="26" Height="26" Background="#332B14" CornerRadius="6" Margin="6,0,10,0" VerticalAlignment="Center">
-                                            <TextBlock Text="📁" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" Width="32" Height="32" CornerRadius="8"
+                                                Background="#152238" BorderBrush="#223659" BorderThickness="1"
+                                                Margin="6,0,11,0" VerticalAlignment="Center">
+                                            <Path Data="M 3,7 A 2,2 0 0 1 5,5 L 9,5 L 11,7 L 19,7 A 2,2 0 0 1 21,9 L 21,18 A 2,2 0 0 1 19,20 L 5,20 A 2,2 0 0 1 3,18 Z"
+                                                  Stroke="#38BDF8" StrokeThickness="1.7" StrokeJoin="Round"
+                                                  Width="16" Height="16" Stretch="Uniform"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
 
-                                        <!-- Truncated Name -->
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#F8FAFC"
                                                        TextTrimming="CharacterEllipsis" MaxLines="1"
                                                        ToolTip.Tip="{Binding Name}"/>
-                                            <TextBlock Text="Package" FontSize="11" Foreground="#6B7280"/>
+                                            <TextBlock Text="{Binding SubtitleText}" FontSize="11.5" Foreground="#64748B"
+                                                       TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                       ToolTip.Tip="{Binding SubtitleText}"/>
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Overall Progress Bar -->
-                                    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                                        <ProgressBar Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" 
+                                    <!-- Column 1: Smooth Progress Bar + % -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="8,0">
+                                        <ProgressBar Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100"
                                                      Height="6" CornerRadius="3"
-                                                     Foreground="{Binding ProgressBarColor}" Background="#262D3D"/>
-                                    </Grid>
+                                                     Foreground="{Binding ProgressBarColor}" Background="#1B2436"/>
+                                        <TextBlock Text="{Binding ProgressPercentage, StringFormat='{}{0:0.#}%'}"
+                                                   FontSize="10.5" FontWeight="Medium" Foreground="#64748B" HorizontalAlignment="Right"/>
+                                    </StackPanel>
 
-                                    <!-- Speed (Empty for package) -->
-                                    <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
-
-                                    <!-- ETA (Empty for package) -->
-                                    <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
-
-                                    <!-- Total Size -->
-                                    <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}" 
-                                               Foreground="#E5E7EB" FontWeight="Medium" FontSize="13" 
+                                    <!-- Column 2: Speed -->
+                                    <TextBlock Grid.Column="2" Text="{Binding SpeedString}"
+                                               Foreground="#38BDF8" FontWeight="SemiBold" FontSize="12.5"
                                                VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                    <!-- Status -->
-                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}" CornerRadius="12" 
-                                            Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    <!-- Column 3: ETA -->
+                                    <TextBlock Grid.Column="3" Text="{Binding EtaString}"
+                                               Foreground="#CBD5E1" FontSize="12.5"
+                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                    <!-- Column 4: Total Size -->
+                                    <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}"
+                                               Foreground="#E2E8F0" FontWeight="Medium" FontSize="12.5"
+                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
+
+                                    <!-- Column 5: Translucent Status Pill -->
+                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}"
+                                            BorderBrush="{Binding BadgeBorder}" BorderThickness="1"
+                                            CornerRadius="12" Padding="10,3"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                             IsVisible="{Binding IsBadgeVisible}">
-                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
-                                                   FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}"
+                                                   FontWeight="SemiBold" FontSize="11.5"/>
                                     </Border>
+
+                                    <!-- Column 6: Inline Quick Actions -->
+                                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="5"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <!-- Resume -->
+                                        <Button Classes="icon-btn" IsVisible="{Binding CanResume}"
+                                                Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ResumePackageCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Start / Resume Package">
+                                            <Path Data="M 7,5 L 19,12 L 7,19 Z" Fill="#10B981" Width="11" Height="11" Stretch="Uniform"/>
+                                        </Button>
+
+                                        <!-- Pause -->
+                                        <Button Classes="icon-btn" IsVisible="{Binding IsDownloading}"
+                                                Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).PausePackageCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Pause Package">
+                                            <Path Data="M 6,5 L 10,5 L 10,19 L 6,19 Z M 14,5 L 18,5 L 18,19 L 14,19 Z" Fill="#F59E0B" Width="11" Height="11" Stretch="Uniform"/>
+                                        </Button>
+
+                                        <!-- Open Folder -->
+                                        <Button Classes="icon-btn"
+                                                Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).OpenPackageFolderCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Open Destination Folder">
+                                            <Path Data="M 3,7 A 2,2 0 0 1 5,5 L 9,5 L 11,7 L 19,7 A 2,2 0 0 1 21,9 L 21,18 A 2,2 0 0 1 19,20 L 5,20 A 2,2 0 0 1 3,18 Z"
+                                                  Stroke="#93C5FD" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"/>
+                                        </Button>
+
+                                        <!-- Remove -->
+                                        <Button Classes="icon-btn"
+                                                Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).RemovePackageCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Remove Package">
+                                            <Path Data="M 18,6 L 6,18 M 6,6 L 18,18"
+                                                  Stroke="#F87171" StrokeThickness="1.9" StrokeLineCap="Round"
+                                                  Width="11" Height="11" Stretch="Uniform"/>
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- Child Part Rows -->
                                 <ItemsControl ItemsSource="{Binding Items}" IsVisible="{Binding IsExpanded}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:DownloadItemViewModel">
-                                            <!-- Matching Padding (12,8) and 0 horizontal margin ensures columns align perfectly! -->
-                                            <Border Background="#161B25" CornerRadius="6" Margin="0,3,0,0" Padding="12,8">
-                                                <Grid ColumnDefinitions="*,180,100,100,90,110">
-                                                    <!-- File Name & Icon (Indented within Column 0) -->
+                                            <Border Background="#0C1018" BorderBrush="#172030" BorderThickness="1"
+                                                    CornerRadius="8" Margin="0,3,0,0" Padding="12,8">
+                                                <Grid ColumnDefinitions="*,180,95,90,85,104,100">
+                                                    <!-- Indented File Name & Subtitle -->
                                                     <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="24,0,12,0">
-                                                        <TextBlock Grid.Column="0" Text="↳" Foreground="#4B5563" FontSize="13" FontWeight="Bold" 
-                                                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                        <Border Grid.Column="1" Width="24" Height="24" Background="#1C2738" CornerRadius="4" VerticalAlignment="Center">
-                                                            <TextBlock Text="📄" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Path Grid.Column="0" Data="M 6,3 L 6,13 L 15,13"
+                                                              Stroke="#334155" StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                                                              Width="10" Height="10" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                                                        <Border Grid.Column="1" Width="26" Height="26" Background="#131D2E" BorderBrush="#1E2D47" BorderThickness="1"
+                                                                CornerRadius="6" VerticalAlignment="Center">
+                                                            <Path Data="M 14,2 L 6,2 A 2,2 0 0 0 4,4 L 4,20 A 2,2 0 0 0 6,22 L 18,22 A 2,2 0 0 0 20,20 L 20,8 Z M 14,2 L 14,8 L 20,8"
+                                                                  Stroke="#60A5FA" StrokeThickness="1.7" StrokeJoin="Round"
+                                                                  Width="13" Height="13" Stretch="Uniform"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
-                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                            <TextBlock Text="{Binding FileName}" FontSize="13" Foreground="#F3F4F6"
+
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="9,0,0,0" Spacing="1">
+                                                            <TextBlock Text="{Binding FileName}" FontSize="12.5" FontWeight="Medium" Foreground="#E2E8F0"
                                                                        TextTrimming="CharacterEllipsis" MaxLines="1"
                                                                        ToolTip.Tip="{Binding FileName}"/>
-                                                            <TextBlock Text="{Binding FormattedSize}" FontSize="11" Foreground="#6B7280"/>
+                                                            <TextBlock Text="{Binding ProgressSubtitle}" FontSize="11" Foreground="#64748B"/>
                                                         </StackPanel>
                                                     </Grid>
 
-                                                    <!-- Segmented Chunk Progress Bar -->
+                                                    <!-- 16-Segment Chunk Visualizer -->
                                                     <Grid Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                                                        <!-- Segmented chunks when downloading or completed -->
                                                         <ItemsControl ItemsSource="{Binding Chunks}" IsVisible="{Binding !IsExtracting}">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
@@ -137,38 +253,42 @@
                                                             </ItemsControl.ItemsPanel>
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate x:DataType="vm:DownloadChunkViewModel">
-                                                                    <Border Width="7" Height="14" CornerRadius="2" 
+                                                                    <Border Width="7" Height="12" CornerRadius="2"
                                                                             Background="{Binding FillColor}"/>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
                                                         </ItemsControl>
 
-                                                        <!-- Striped progress when extracting -->
-                                                        <ProgressBar IsIndeterminate="True" Height="8" CornerRadius="4"
-                                                                     Foreground="#D97706" Background="#262D3D"
+                                                        <ProgressBar IsIndeterminate="True" Height="6" CornerRadius="3"
+                                                                     Foreground="#F59E0B" Background="#1B2436"
                                                                      IsVisible="{Binding IsExtracting}"/>
                                                     </Grid>
 
-                                                    <!-- Speed -->
-                                                    <TextBlock Grid.Column="2" Text="{Binding SpeedString}" 
-                                                               Foreground="#93C5FD" FontSize="13" 
+                                                    <!-- Item Speed -->
+                                                    <TextBlock Grid.Column="2" Text="{Binding SpeedString}"
+                                                               Foreground="#7DD3FC" FontSize="12"
                                                                VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                                    <!-- ETA -->
-                                                    <TextBlock Grid.Column="3" Text="{Binding EtaString}" 
-                                                               Foreground="#E5E7EB" FontSize="13" 
+                                                    <!-- Item ETA -->
+                                                    <TextBlock Grid.Column="3" Text="{Binding EtaString}"
+                                                               Foreground="#CBD5E1" FontSize="12"
                                                                VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                                    <!-- Size (empty for child row since shown under name) -->
-                                                    <TextBlock Grid.Column="4" Text="" VerticalAlignment="Center"/>
+                                                    <!-- Item Size -->
+                                                    <TextBlock Grid.Column="4" Text="{Binding FormattedSize}"
+                                                               Foreground="#94A3B8" FontSize="12"
+                                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                                    <!-- Status Badge -->
-                                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}" 
-                                                            CornerRadius="12" Padding="10,3"
+                                                    <!-- Item Status Pill -->
+                                                    <Border Grid.Column="5" Background="{Binding BadgeBackground}"
+                                                            BorderBrush="{Binding BadgeBorder}" BorderThickness="1"
+                                                            CornerRadius="10" Padding="9,2"
                                                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}"
                                                                    FontWeight="SemiBold" FontSize="11"/>
                                                     </Border>
+
+                                                    <TextBlock Grid.Column="6" Text="" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>

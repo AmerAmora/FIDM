@@ -14,7 +14,7 @@ public partial class DownloadChunkViewModel : ObservableObject
     private bool _isCompleted;
 
     [ObservableProperty]
-    private string _fillColor = "#1E2533";
+    private string _fillColor = "#182030";
 
     public DownloadChunkViewModel(int index, double progressPercentage = 0, bool isCompleted = false)
     {
@@ -35,19 +35,19 @@ public partial class DownloadChunkViewModel : ObservableObject
     {
         if (isItemCompleted)
         {
-            FillColor = "#10B981"; // Emerald Green for completed file
+            FillColor = "#10B981"; // Vibrant Emerald
         }
         else if (IsCompleted || ProgressPercentage >= 100.0)
         {
-            FillColor = "#2D8CFF"; // Vibrant Cyan-Blue
+            FillColor = "#0EA5E9"; // Electric Sky Cyan
         }
         else if (ProgressPercentage > 0)
         {
-            FillColor = "#60A5FA"; // Lighter In-Progress Blue
+            FillColor = "#3B82F6"; // Royal Azure
         }
         else
         {
-            FillColor = "#1E2533"; // Dark Background
+            FillColor = "#182030"; // Recessed Dark Slate
         }
     }
 }

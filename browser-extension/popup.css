@@ -1,0 +1,345 @@
+/* NetDownloader Extension Popup - Obsidian & Electric Azure Design */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, sans-serif;
+  background-color: #090C12;
+  color: #F8FAFC;
+  width: 372px;
+  overflow-x: hidden;
+  font-size: 13px;
+}
+
+.popup-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 55%), #090C12;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #182030;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F8FAFC;
+  letter-spacing: 0.1px;
+}
+
+.brand-sub {
+  font-size: 10.5px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #121824;
+  border: 1px solid #1E2738;
+  color: #94A3B8;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748B;
+}
+
+.status-badge.online {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: #34D399;
+}
+.status-badge.online .status-dot {
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+}
+
+.status-badge.offline {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.32);
+  color: #F87171;
+}
+.status-badge.offline .status-dot {
+  background: #EF4444;
+}
+
+/* Segmented Nav Tabs */
+.nav-tabs {
+  display: flex;
+  background: #0D1119;
+  border: 1px solid #182030;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.nav-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #8B98AD;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.nav-tab:hover {
+  color: #F8FAFC;
+}
+
+.nav-tab.active {
+  background: #162033;
+  color: #38BDF8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Tab Panels */
+.tab-panel {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-panel.active {
+  display: flex;
+}
+
+/* Card */
+.card {
+  background: #121824;
+  border: 1px solid #1E2738;
+  border-radius: 10px;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-label {
+  font-size: 10.5px;
+  color: #64748B;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.count-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34D399;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.pkg-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F8FAFC;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.input, .textarea {
+  width: 100%;
+  background: #0A0E16;
+  border: 1px solid #1E2738;
+  border-radius: 8px;
+  color: #F8FAFC;
+  padding: 9px 11px;
+  font-size: 12px;
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.input {
+  font-family: inherit;
+}
+
+.input:focus, .textarea:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 82px;
+}
+
+/* Actions & Buttons */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9.5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  flex: 1;
+  background: linear-gradient(135deg, #3B82F6 0%, #0EA5E9 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.22);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: linear-gradient(135deg, #2563EB 0%, #0284C7 100%);
+}
+
+.btn-secondary {
+  background: #131926;
+  color: #E2E8F0;
+  border: 1px solid #202A3D;
+}
+
+.btn-secondary:not(:disabled):hover {
+  background: #1B2436;
+  border-color: #2E3D59;
+  color: #FFFFFF;
+}
+
+.log-text {
+  font-size: 11.5px;
+  color: #64748B;
+  text-align: center;
+}
+
+/* Progress bar */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: #121824;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #10B981);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #34D399;
+  font-weight: 600;
+  text-align: right;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Footer notification */
+.footer-notification {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  background: #121824;
+  border: 1px solid #1E2738;
+  animation: fadeIn 0.2s ease;
+}
+
+.footer-notification.success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34D399;
+}
+
+.footer-notification.error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #F87171;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

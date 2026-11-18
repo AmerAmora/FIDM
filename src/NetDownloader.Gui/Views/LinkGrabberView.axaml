@@ -4,100 +4,152 @@
              x:Class="NetDownloader.Gui.Views.LinkGrabberView"
              x:DataType="vm:LinkGrabberViewModel">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
-        <!-- Page Title -->
-        <TextBlock Grid.Row="0" Text="LinkGrabber" 
-                   FontSize="22" FontWeight="SemiBold" 
-                   Foreground="#FFFFFF" Margin="0,0,0,16"/>
-
-        <!-- Input Links Section -->
-        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,16">
-            <TextBlock Text="Input Links" FontSize="15" FontWeight="SemiBold" Foreground="#E5E7EB"/>
-            
-            <TextBox Text="{Binding InputText}"
-                     AcceptsReturn="True" TextWrapping="Wrap"
-                     Height="100" CornerRadius="6"
-                     Background="#181D26" BorderBrush="#2D8CFF" BorderThickness="1"
-                     Foreground="#FFFFFF" FontSize="13" Padding="12,10"
-                     Watermark="Paste links here (one per line, e.g. https://server.com/archive.part1.rar)..."/>
-
-            <!-- Analyze Links Button -->
-            <Button Command="{Binding AnalyzeLinksCommand}"
-                    HorizontalAlignment="Right"
-                    Background="#242B38" BorderBrush="#3B82F6" BorderThickness="1"
-                    Foreground="#FFFFFF" FontWeight="Medium"
-                    CornerRadius="6" Padding="16,8" Cursor="Hand">
-                <TextBlock Text="{Binding AnalyzeButtonText}" FontSize="13"/>
-            </Button>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- 1. Page Title -->
+        <StackPanel Grid.Row="0" Spacing="3" Margin="0,0,0,16">
+            <TextBlock Text="LinkGrabber" FontSize="22" FontWeight="Bold" Foreground="#F8FAFC"/>
+            <TextBlock Text="Probe URLs, verify online availability, and auto-group multi-part archives before downloading"
+                       FontSize="12.5" Foreground="#64748B"/>
         </StackPanel>
 
-        <!-- Detected Packages Header -->
-        <TextBlock Grid.Row="2" Text="Detected Packages" FontSize="15" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,0,0,8"/>
+        <!-- 2. URL Composer Card -->
+        <Border Grid.Row="1" Background="#121824" BorderBrush="#1E2738" BorderThickness="1"
+                CornerRadius="12" Padding="16,14" Margin="0,0,0,18">
+            <StackPanel Spacing="12">
+                <!-- Composer Header + Quick Paste/Clear -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="6" Background="#15233B">
+                            <Path Data="M 10,13 A 5,5 0 0 0 17.54,13.54 L 20.54,10.54 A 5,5 0 0 0 13.47,3.47 L 11.75,5.18 M 14,11 A 5,5 0 0 0 6.46,10.46 L 3.46,13.46 A 5,5 0 0 0 10.53,20.53 L 12.24,18.82"
+                                  Stroke="#38BDF8" StrokeThickness="1.8" StrokeLineCap="Round"
+                                  Width="13" Height="13" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Batch URL Input" FontSize="13.5" FontWeight="SemiBold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                    </StackPanel>
 
-        <!-- Detected Packages List -->
-        <Grid Grid.Row="3" RowDefinitions="Auto,*">
-            <!-- Table Header -->
-            <Border Grid.Row="0" Background="#161B24" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
-                <Grid ColumnDefinitions="*,180,100,100,90,110">
-                    <TextBlock Grid.Column="0" Text="Name" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13"/>
-                    <TextBlock Grid.Column="1" Text="Progress" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" Margin="8,0"/>
-                    <TextBlock Grid.Column="2" Text="Speed" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                    <TextBlock Grid.Column="3" Text="ETA" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                    <TextBlock Grid.Column="4" Text="Size" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Right" Margin="0,0,8,0"/>
-                    <TextBlock Grid.Column="5" Text="Status" Foreground="#8F9CAE" FontWeight="Medium" FontSize="13" TextAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Classes="toolbar" Click="OnPasteClipboardClicked" Padding="11,5">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="M 9,2 L 15,2 L 15,5 L 9,5 Z M 16,4 L 18,4 A 2,2 0 0 1 20,6 L 20,20 A 2,2 0 0 1 18,22 L 6,22 A 2,2 0 0 1 4,20 L 4,6 A 2,2 0 0 1 6,4 L 8,4"
+                                      Stroke="#60A5FA" StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <TextBlock Text="Paste Clipboard" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbar" Command="{Binding ClearInputCommand}" Padding="11,5">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="M 18,6 L 6,18 M 6,6 L 18,18"
+                                      Stroke="#94A3B8" StrokeThickness="1.8" StrokeLineCap="Round" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <TextBlock Text="Clear" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="primary" Command="{Binding AnalyzeLinksCommand}" IsEnabled="{Binding !IsAnalyzing}" Padding="16,6">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Path Data="M 12,2 L 14.5,9.5 L 22,12 L 14.5,14.5 L 12,22 L 9.5,14.5 L 2,12 L 9.5,9.5 Z"
+                                      Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding AnalyzeButtonText}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Multi-line URL Input Box -->
+                <TextBox Classes="modern" Text="{Binding InputText}"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         Height="90" FontSize="12.5" Padding="12,10"
+                         FontFamily="Cascadia Mono, Consolas, monospace"
+                         Watermark="Paste one or more download URLs here (e.g. https://cdn.host/dl/token#Archive.part1.rar)..."/>
+            </StackPanel>
+        </Border>
+
+        <!-- 3. Detected Packages Section -->
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto,*">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <TextBlock Grid.Column="0" Text="Detected Packages" FontSize="14" FontWeight="SemiBold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" Background="#111724" BorderBrush="#1E2738" BorderThickness="1" CornerRadius="10" Padding="10,3">
+                    <TextBlock Text="{Binding SummaryText}" Foreground="#93C5FD" FontSize="11.5" FontWeight="Medium"/>
+                </Border>
+            </Grid>
+
+            <!-- Table Header (when packages exist) -->
+            <Border Grid.Row="1" Background="#101520" BorderBrush="#1B2436" BorderThickness="1"
+                    CornerRadius="8" Padding="14,8" Margin="0,0,0,8"
+                    IsVisible="{Binding HasDetectedPackages}">
+                <Grid ColumnDefinitions="*,130,120">
+                    <TextBlock Grid.Column="0" Text="PACKAGE / ARCHIVE PART" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6"/>
+                    <TextBlock Grid.Column="1" Text="SIZE" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Right" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="2" Text="AVAILABILITY" Foreground="#64748B" FontWeight="Bold" FontSize="11" LetterSpacing="0.6" TextAlignment="Center"/>
                 </Grid>
             </Border>
 
-            <!-- Packages / Parts -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <!-- Empty State (before analysis) -->
+            <Border Grid.Row="2" IsVisible="{Binding !HasDetectedPackages}"
+                    Background="#0F141F" BorderBrush="#1A2233" BorderThickness="1"
+                    CornerRadius="12" Padding="28,24">
+                <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path Data="M 21,15 L 21,19 A 2,2 0 0 1 19,21 L 5,21 A 2,2 0 0 1 3,19 L 3,15 M 7,10 L 12,15 L 17,10 M 12,15 L 12,3"
+                          Stroke="#475569" StrokeThickness="1.8" StrokeLineCap="Round" StrokeJoin="Round"
+                          Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Ready to inspect links" FontSize="14" FontWeight="SemiBold" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Paste URLs above and click Analyze Links, or use the NetDownloader Chromium Extension for 1-click capture."
+                               FontSize="12" Foreground="#64748B" HorizontalAlignment="Center" TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Detected Packages Tree -->
+            <ScrollViewer Grid.Row="2" IsVisible="{Binding HasDetectedPackages}"
+                          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding DetectedPackages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:DownloadPackageViewModel">
-                            <Border Background="#1C212D" BorderBrush="#262D3D" BorderThickness="1" 
-                                    CornerRadius="8" Margin="0,0,0,8" Padding="12,10">
+                            <Border Background="#121824" BorderBrush="#1E2738" BorderThickness="1"
+                                    CornerRadius="10" Margin="0,0,0,8" Padding="14,11">
                                 <StackPanel Spacing="6">
-                                    <!-- Package Row -->
-                                    <Grid ColumnDefinitions="*,180,100,100,90,110">
-                                        <!-- Constrained Column 0 -->
+                                    <!-- Package Header Row -->
+                                    <Grid ColumnDefinitions="*,130,120">
                                         <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
                                             <ToggleButton Grid.Column="0" IsChecked="{Binding IsExpanded}"
                                                           Background="Transparent" BorderThickness="0" Padding="4"
                                                           Cursor="Hand" VerticalAlignment="Center">
                                                 <Panel Width="12" Height="12">
-                                                    <Path Data="M 3,1 L 9,6 L 3,11 Z" Fill="#8F9CAE" Stretch="Uniform"
+                                                    <Path Data="M 4,2 L 10,6 L 4,10" Stroke="#64748B" StrokeThickness="1.8"
+                                                          StrokeLineCap="Round" StrokeJoin="Round" Stretch="Uniform"
                                                           IsVisible="{Binding !IsExpanded}"/>
-                                                    <Path Data="M 1,3 L 6,9 L 11,3 Z" Fill="#2D8CFF" Stretch="Uniform"
+                                                    <Path Data="M 2,4 L 6,10 L 10,4" Stroke="#38BDF8" StrokeThickness="1.8"
+                                                          StrokeLineCap="Round" StrokeJoin="Round" Stretch="Uniform"
                                                           IsVisible="{Binding IsExpanded}"/>
                                                 </Panel>
                                             </ToggleButton>
 
-                                            <Border Grid.Column="1" Width="26" Height="26" Background="#332B14" CornerRadius="6" Margin="6,0,10,0" VerticalAlignment="Center">
-                                                <TextBlock Text="📁" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8"
+                                                    Background="#152238" BorderBrush="#223659" BorderThickness="1"
+                                                    Margin="6,0,10,0" VerticalAlignment="Center">
+                                                <Path Data="M 3,7 A 2,2 0 0 1 5,5 L 9,5 L 11,7 L 19,7 A 2,2 0 0 1 21,9 L 21,18 A 2,2 0 0 1 19,20 L 5,20 A 2,2 0 0 1 3,18 Z"
+                                                      Stroke="#38BDF8" StrokeThickness="1.7" StrokeJoin="Round"
+                                                      Width="15" Height="15" Stretch="Uniform"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
 
-                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF"
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13.5" Foreground="#F8FAFC"
                                                            TextTrimming="CharacterEllipsis" MaxLines="1"
                                                            ToolTip.Tip="{Binding Name}"/>
-                                                <TextBlock Text="Package" FontSize="11" Foreground="#6B7280"/>
+                                                <TextBlock Text="{Binding SubtitleText}" FontSize="11" Foreground="#64748B"
+                                                           TextTrimming="CharacterEllipsis" MaxLines="1"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage}" Height="6" 
-                                                     CornerRadius="3" Foreground="{Binding ProgressBarColor}" Background="#262D3D"
-                                                     VerticalAlignment="Center" Margin="8,0"/>
-
-                                        <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
-
-                                        <TextBlock Grid.Column="4" Text="{Binding FormattedTotalSize}" 
-                                                   Foreground="#E5E7EB" FontWeight="Medium" FontSize="13" 
+                                        <TextBlock Grid.Column="1" Text="{Binding FormattedTotalSize}"
+                                                   Foreground="#E2E8F0" FontWeight="SemiBold" FontSize="13"
                                                    VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                        <Border Grid.Column="5" Background="{Binding BadgeBackground}" CornerRadius="12" 
-                                                Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
-                                                       FontWeight="SemiBold" FontSize="12"/>
+                                        <Border Grid.Column="2" Background="{Binding BadgeBackground}"
+                                                BorderBrush="{Binding BadgeBorder}" BorderThickness="1"
+                                                CornerRadius="12" Padding="11,3"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}"
+                                                       FontWeight="SemiBold" FontSize="11.5"/>
                                         </Border>
                                     </Grid>
 
@@ -105,35 +157,34 @@
                                     <ItemsControl ItemsSource="{Binding Items}" IsVisible="{Binding IsExpanded}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:DownloadItemViewModel">
-                                                <Border Background="#161B25" CornerRadius="6" Margin="0,3,0,0" Padding="12,8">
-                                                    <Grid ColumnDefinitions="*,180,100,100,90,110">
-                                                        <!-- Constrained Column 0 -->
+                                                <Border Background="#0C1018" BorderBrush="#172030" BorderThickness="1"
+                                                        CornerRadius="7" Margin="0,3,0,0" Padding="12,7">
+                                                    <Grid ColumnDefinitions="*,130,120">
                                                         <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" Margin="24,0,12,0">
-                                                            <TextBlock Grid.Column="0" Text="↳" Foreground="#4B5563" FontSize="13" FontWeight="Bold" 
-                                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                            <Border Grid.Column="1" Width="24" Height="24" Background="#1C2738" CornerRadius="4" VerticalAlignment="Center">
-                                                                <TextBlock Text="📄" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <Path Grid.Column="0" Data="M 6,3 L 6,13 L 15,13"
+                                                                  Stroke="#334155" StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                                                                  Width="10" Height="10" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                            <Border Grid.Column="1" Width="24" Height="24" Background="#131D2E" BorderBrush="#1E2D47" BorderThickness="1"
+                                                                    CornerRadius="5" VerticalAlignment="Center">
+                                                                <Path Data="M 14,2 L 6,2 A 2,2 0 0 0 4,4 L 4,20 A 2,2 0 0 0 6,22 L 18,22 A 2,2 0 0 0 20,20 L 20,8 Z M 14,2 L 14,8 L 20,8"
+                                                                      Stroke="#60A5FA" StrokeThickness="1.7" Width="12" Height="12" Stretch="Uniform"
+                                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                                <TextBlock Text="{Binding FileName}" FontSize="13" Foreground="#F3F4F6"
-                                                                           TextTrimming="CharacterEllipsis" MaxLines="1"
-                                                                           ToolTip.Tip="{Binding FileName}"/>
-                                                                <TextBlock Text="{Binding FormattedSize}" FontSize="11" Foreground="#6B7280"/>
-                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="2" Text="{Binding FileName}" FontSize="12.5" Foreground="#E2E8F0"
+                                                                       VerticalAlignment="Center" Margin="9,0,0,0"
+                                                                       TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                                       ToolTip.Tip="{Binding FileName}"/>
                                                         </Grid>
 
-                                                        <TextBlock Grid.Column="1" Text="" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="2" Text="" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="3" Text="" VerticalAlignment="Center"/>
-
-                                                        <TextBlock Grid.Column="4" Text="{Binding FormattedSize}" 
-                                                                   Foreground="#D1D5DB" FontSize="13" 
+                                                        <TextBlock Grid.Column="1" Text="{Binding FormattedSize}"
+                                                                   Foreground="#94A3B8" FontSize="12"
                                                                    VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
 
-                                                        <Border Grid.Column="5" Background="{Binding BadgeBackground}" 
-                                                                CornerRadius="12" Padding="10,3"
+                                                        <Border Grid.Column="2" Background="{Binding BadgeBackground}"
+                                                                BorderBrush="{Binding BadgeBorder}" BorderThickness="1"
+                                                                CornerRadius="10" Padding="9,2"
                                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}" 
+                                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding BadgeForeground}"
                                                                        FontWeight="SemiBold" FontSize="11"/>
                                                         </Border>
                                                     </Grid>
@@ -149,36 +200,45 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- Bottom Controls -->
-        <Border Grid.Row="4" Background="#151922" BorderBrush="#262D3D" BorderThickness="0,1,0,0" 
-                Padding="12,14" Margin="0,12,0,0">
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                <!-- Save To -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="Save to:" Foreground="#9CA3AF" FontSize="13" VerticalAlignment="Center"/>
-                    <Button Name="BrowseButton" Content="📁" Background="#1E232F" BorderBrush="#2A3245" 
-                            CornerRadius="6" Padding="8,6" Cursor="Hand" Click="OnBrowseFolderClicked"/>
-                    <TextBox Text="{Binding SaveDirectory}" Width="260" Height="34" CornerRadius="6"
-                             Background="#1C212D" BorderBrush="#2A3245" Foreground="#FFFFFF" FontSize="12"
+        <!-- 4. Docked Destination, Password & Enqueue Action Bar -->
+        <Border Grid.Row="3" Background="#111723" BorderBrush="#1E2738" BorderThickness="1"
+                CornerRadius="12" Padding="14,12" Margin="0,14,0,0">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <!-- Save Directory -->
+                <Grid Grid.Column="0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBlock Grid.Column="0" Text="Destination" Foreground="#94A3B8" FontSize="12" FontWeight="Medium"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox Grid.Column="1" Classes="modern" Text="{Binding SaveDirectory}" Height="34"
+                             FontSize="12" Padding="10,6" VerticalContentAlignment="Center"/>
+                    <Button Grid.Column="2" Name="BrowseButton" Classes="toolbar"
+                            Padding="11,7" Margin="6,0,0,0" Click="OnBrowseFolderClicked"
+                            ToolTip.Tip="Browse Folder">
+                        <Path Data="M 3,7 A 2,2 0 0 1 5,5 L 9,5 L 11,7 L 19,7 A 2,2 0 0 1 21,9 L 21,18 A 2,2 0 0 1 19,20 L 5,20 A 2,2 0 0 1 3,18 Z"
+                              Stroke="#93C5FD" StrokeThickness="1.7" Width="14" Height="14" Stretch="Uniform"/>
+                    </Button>
+                </Grid>
+
+                <!-- Archive Password -->
+                <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBox Classes="modern" Text="{Binding ExtractionPassword}"
+                             PasswordChar="•" Watermark="Archive password (optional)"
+                             Width="205" Height="34" FontSize="12" Padding="30,6,10,6"
                              VerticalContentAlignment="Center"/>
-                </StackPanel>
+                    <Path Data="M 7,11 L 7,7 A 5,5 0 0 1 17,7 L 17,11 M 5,11 L 19,11 A 2,2 0 0 1 21,13 L 21,20 A 2,2 0 0 1 19,22 L 5,22 A 2,2 0 0 1 3,20 L 3,13 A 2,2 0 0 1 5,11 Z"
+                          Stroke="#64748B" StrokeThickness="1.7" Width="13" Height="13" Stretch="Uniform"
+                          HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"
+                          IsHitTestVisible="False"/>
+                </Grid>
 
-                <!-- Password -->
-                <TextBox Grid.Column="1" Text="{Binding ExtractionPassword}" 
-                         PasswordChar="•" Watermark="Password (optional)"
-                         Width="200" Height="34" CornerRadius="6" Margin="16,0"
-                         Background="#1C212D" BorderBrush="#2A3245" Foreground="#FFFFFF" FontSize="12"
-                         HorizontalAlignment="Left" VerticalContentAlignment="Center"/>
-
-                <!-- Summary -->
-                <TextBlock Grid.Column="2" Text="{Binding SummaryText}" Foreground="#9CA3AF" FontSize="12" 
-                           VerticalAlignment="Center" Margin="0,0,16,0"/>
-
-                <!-- Enqueue & Start Button -->
-                <Button Grid.Column="3" Command="{Binding EnqueueAndStartDownloadsCommand}"
-                        Background="#2D8CFF" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"
-                        CornerRadius="6" Padding="20,10" Cursor="Hand">
-                    <TextBlock Text="Enqueue &amp; Start Downloads"/>
+                <!-- Enqueue & Start CTA -->
+                <Button Grid.Column="2" Classes="primary" Command="{Binding EnqueueAndStartDownloadsCommand}"
+                        IsEnabled="{Binding HasDetectedPackages}" Padding="20,9">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Data="M 12,3 L 12,15 M 7,10 L 12,15 L 17,10 M 5,20 L 19,20"
+                              Stroke="#FFFFFF" StrokeThickness="2.1" StrokeLineCap="Round" StrokeJoin="Round"
+                              Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Enqueue &amp; Start Downloads" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Button>
             </Grid>
         </Border>

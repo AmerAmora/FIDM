@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetDownloader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="NetDownloader" class="brand-icon">
+        <div class="brand-info">
+          <span class="brand-title">NetDownloader</span>
+          <span class="brand-sub">Integration v1.0</span>
+        </div>
+      </div>
+      <div id="status-badge" class="status-badge checking">
+        <span class="status-dot"></span>
+        <span id="status-text">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Nav Tabs -->
+    <nav class="nav-tabs">
+      <button id="tab-page" class="nav-tab active">Current Page</button>
+      <button id="tab-batch" class="nav-tab">Batch Paste</button>
+    </nav>
+
+    <!-- Tab 1: Current Page -->
+    <section id="panel-page" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Detected Package</span>
+          <span id="page-count-badge" class="count-badge">0 links</span>
+        </div>
+        <div id="page-pkg-name" class="pkg-name" title="No links detected yet">None</div>
+      </div>
+
+      <div class="actions">
+        <button id="btn-page-resolve" class="btn btn-primary" disabled>
+          🚀 1-Click Resolve &amp; Download
+        </button>
+        <button id="btn-page-copy" class="btn btn-secondary" disabled>
+          📋 Copy Direct Links
+        </button>
+      </div>
+
+      <div id="page-log" class="log-text">Open a supported page (FitGirl / File Host) or click Grab.</div>
+    </section>
+
+    <!-- Tab 2: Batch Paste -->
+    <section id="panel-batch" class="tab-panel">
+      <div class="input-group">
+        <label for="batch-input" class="input-label">Paste links (one per line):</label>
+        <textarea id="batch-input" class="textarea" rows="4" placeholder="https://fuckingfast.co/w674u09fbhw0#Bloodborne.part1.rar&#10;https://fuckingfast.co/0zfhw0rh79m5#Bloodborne.part2.rar"></textarea>
+      </div>
+
+      <div class="input-group">
+        <label for="batch-pkg" class="input-label">Package Name (optional):</label>
+        <input id="batch-pkg" type="text" class="input" placeholder="Leave empty to auto-detect">
+      </div>
+
+      <div class="actions">
+        <button id="btn-batch-resolve" class="btn btn-primary">
+          ⚡ Resolve All &amp; Send to NetDownloader
+        </button>
+      </div>
+
+      <!-- Progress bar -->
+      <div id="progress-container" class="progress-container hidden">
+        <div class="progress-bar-bg">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div id="progress-text" class="progress-text">0 / 0 parts resolved</div>
+      </div>
+    </section>
+
+    <!-- Footer Toast Notification -->
+    <footer id="footer-notification" class="footer-notification hidden">
+      <span id="footer-msg"></span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
